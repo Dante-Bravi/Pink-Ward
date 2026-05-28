@@ -30,9 +30,12 @@ contextBridge.exposeInMainWorld('pinkWardDesktop', {
   updateProject: (project) => ipcRenderer.invoke('projects:update', project),
   getFilePath: (file) => webUtils.getPathForFile(file),
   previewFile: (filePath) => ipcRenderer.invoke('files:preview', filePath),
+  revealFile: (filePath) => ipcRenderer.invoke('files:reveal', filePath),
   getThumbnail: (filePath) => ipcRenderer.invoke('files:thumbnail', filePath),
   getVideoFrame: (filePath) => ipcRenderer.invoke('files:video-frame', filePath),
+  extractFrames: (payload) => ipcRenderer.invoke('files:extract-frames', payload),
   runInference: (payload) => ipcRenderer.invoke('inference:run', payload),
+  cancelInference: (runId) => ipcRenderer.invoke('inference:cancel', runId),
   fileUrl: (filePath) => fileUrlFromPath(filePath),
   onInferenceFrame: (callback) => {
     const listener = (_event, payload) => callback(payload);

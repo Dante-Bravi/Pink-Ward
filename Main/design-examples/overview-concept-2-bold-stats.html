@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Overview Concept 2 - Bold Stats</title>
+  <style>
+    body { margin:0; padding:24px; background:#f3f5f4; font-family:Inter,system-ui,sans-serif; }
+    .wrap { display:grid; grid-template-columns:2fr 1fr; gap:16px; align-items:stretch; }
+    .panel { min-height:520px; border:1px solid #cad4ce; border-radius:16px; background:#fff; padding:22px; display:grid; grid-template-rows:auto auto 1fr; }
+    h2 { margin:0; font-size:30px; }
+    .name { margin-top:16px; font-size:24px; display:flex; justify-content:space-between; border-bottom:1px solid #cad4ce; padding-bottom:12px; }
+    .grid { margin-top:16px; display:grid; gap:12px; align-content:stretch; }
+    .tile { background:#f7faf8; border:1px solid #d9e3dd; border-radius:12px; padding:14px; display:grid; gap:6px; }
+    .tile span { font-size:14px; color:#6c7771; text-transform:uppercase; font-weight:700; }
+    .tile strong { font-size:34px; line-height:1; }
+    @media (max-width: 980px) {
+      .wrap { grid-template-columns:1fr; }
+      .panel { min-height:420px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="panel">
+      <h2>Recent Model</h2>
+      <div class="name"><span style="color:#6c7771">Thermal-git 2</span><b>Compared to Pinned</b></div>
+      <div class="grid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="tile"><span>mAP50</span><strong>NA</strong></div>
+        <div class="tile"><span>Precision</span><strong>NA</strong></div>
+        <div class="tile"><span>Recall</span><strong>NA</strong></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Pinned 📌</h2>
+      <div class="name"><span style="color:#6c7771">Name</span><b>Thermal v1</b></div>
+      <div class="grid">
+        <div class="tile"><span>mAP50</span><strong>NA</strong></div>
+        <div class="tile"><span>Precision</span><strong>NA</strong></div>
+        <div class="tile"><span>Recall</span><strong>NA</strong></div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

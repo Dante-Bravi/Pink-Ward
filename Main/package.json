@@ -21,10 +21,12 @@
       "main.js",
       "preload.js",
       "inference/**/*",
+      "scripts/**/*",
       "assets/**/*"
     ],
     "asarUnpack": [
-      "inference/**/*"
+      "inference/**/*",
+      "scripts/**/*"
     ],
     "extraResources": [
       {

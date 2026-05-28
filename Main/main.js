@@ -10,6 +10,8 @@ let mainWindow;
 const storeFileName = 'pink-ward-projects.json';
 const execFileAsync = promisify(execFile);
 let cachedPythonExecutable = null;
+const activeInferenceProcesses = new Map();
+const canceledInferenceRuns = new Set();
 
 function getStorePath() {
   return path.join(app.getPath('userData'), storeFileName);
@@ -21,6 +23,14 @@ function getInferenceScriptPath() {
   }
 
   return path.join(__dirname, 'inference', 'run_yolo_inference.py');
+}
+
+function getExtractFramesScriptPath() {
+  if (app.isPackaged) {
+    return path.join(process.resourcesPath, 'app.asar.unpacked', 'scripts', 'extract_video_frames.py');
+  }
+
+  return path.join(__dirname, 'scripts', 'extract_video_frames.py');
 }
 
 function getBundledPythonPath() {
@@ -72,6 +82,28 @@ function sanitizeFileName(value) {
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, 80) || 'inference-run';
+}
+
+async function makeUniqueDirectory(rootPath, desiredName) {
+  const sanitizedName = sanitizeFileName(desiredName).slice(0, 120) || 'Extracted frames';
+  let candidateName = sanitizedName;
+  let attempt = 2;
+
+  while (true) {
+    const candidatePath = path.join(rootPath, candidateName);
+
+    try {
+      await fs.mkdir(candidatePath);
+      return candidatePath;
+    } catch (error) {
+      if (error.code !== 'EEXIST') {
+        throw error;
+      }
+
+      candidateName = `${sanitizedName} (${attempt})`;
+      attempt += 1;
+    }
+  }
 }
 
 function getPrimaryJson(stdout) {
@@ -272,6 +304,110 @@ async function runPythonInference(payload) {
   }
 }
 
+async function extractVideoFrames(payload) {
+  const sourcePath = String(payload?.sourcePath || '').trim();
+  const intervalSeconds = Number(payload?.intervalSeconds);
+  const modelPath = String(payload?.modelPath || '').trim();
+  const confidence = Number.isFinite(Number(payload?.confidence)) ? Number(payload.confidence) : 0.25;
+
+  if (!sourcePath) {
+    throw new Error('Source path is required.');
+  }
+
+  if (!Number.isFinite(intervalSeconds) || intervalSeconds <= 0) {
+    throw new Error('Interval seconds must be greater than zero.');
+  }
+
+  await fs.access(sourcePath);
+  const sourceName = path.parse(sourcePath).name || 'Video';
+  const outputRoot = path.join(app.getPath('userData'), 'extracted-frames');
+  await fs.mkdir(outputRoot, { recursive: true });
+  const outputDir = await makeUniqueDirectory(outputRoot, `Extracted frames from ${sourceName}`);
+
+  const args = [
+    getExtractFramesScriptPath(),
+    '--source',
+    sourcePath,
+    '--output-dir',
+    outputDir,
+    '--interval-seconds',
+    String(intervalSeconds)
+  ];
+
+  if (modelPath) {
+    await fs.access(modelPath);
+    args.push('--model');
+    args.push(modelPath);
+    args.push('--confidence');
+    args.push(String(confidence));
+  }
+
+  const pythonExecutable = await resolvePythonExecutable();
+
+  let result = null;
+  try {
+    const { stdout, stderr } = await execFileAsync(pythonExecutable, args, {
+      cwd: getProcessWorkingDirectory(),
+      windowsHide: true,
+      maxBuffer: 1024 * 1024 * 32,
+      timeout: 1000 * 60 * 60
+    });
+    result = getPrimaryJson(stdout);
+
+    if (!result?.ok) {
+      throw new Error(result?.error || stderr || 'Frame extraction did not return a usable result.');
+    }
+  } catch (error) {
+    const parsed = getPrimaryJson(error.stdout);
+    throw new Error(parsed?.error || error.stderr || error.message || 'Frame extraction failed.');
+  }
+
+  const entries = await fs.readdir(outputDir, { withFileTypes: true });
+  const frameFiles = [];
+  const labelFiles = [];
+
+  for (const entry of entries) {
+    if (!entry.isFile()) {
+      continue;
+    }
+
+    const fileName = entry.name;
+    const absolutePath = path.join(outputDir, fileName);
+    const stat = await fs.stat(absolutePath);
+    const detail = {
+      path: absolutePath,
+      name: fileName,
+      size: stat.size,
+      lastModified: Math.round(stat.mtimeMs)
+    };
+
+    if (/\.(apng|avif|bmp|gif|jpe?g|png|webp)$/i.test(fileName)) {
+      frameFiles.push(detail);
+      continue;
+    }
+
+    if (/\.txt$/i.test(fileName)) {
+      labelFiles.push(detail);
+    }
+  }
+
+  frameFiles.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+
+  return {
+    ok: true,
+    outputDir,
+    folderName: path.basename(outputDir),
+    sourcePath,
+    sourceName: path.basename(sourcePath),
+    intervalSeconds,
+    frameCount: frameFiles.length,
+    labelCount: labelFiles.length,
+    durationSeconds: Number(result.durationSeconds || 0),
+    frameFiles,
+    labelFiles
+  };
+}
+
 function runStreamingPythonInference(payload, webContents) {
   return new Promise(async (resolve, reject) => {
     const modelPath = String(payload?.modelPath || '').trim();
@@ -320,6 +456,9 @@ function runStreamingPythonInference(payload, webContents) {
       windowsHide: true,
       stdio: ['ignore', 'pipe', 'pipe']
     });
+    if (runId) {
+      activeInferenceProcesses.set(runId, child);
+    }
     webContents.send('inference:frame', {
       runId,
       event: 'progress',
@@ -366,6 +505,13 @@ function runStreamingPythonInference(payload, webContents) {
 
     child.on('error', reject);
     child.on('close', (code) => {
+      if (runId) {
+        activeInferenceProcesses.delete(runId);
+      }
+      const wasCanceled = runId ? canceledInferenceRuns.has(runId) : false;
+      if (runId) {
+        canceledInferenceRuns.delete(runId);
+      }
       if (stdoutBuffer.trim()) {
         try {
           const event = JSON.parse(stdoutBuffer.trim());
@@ -379,12 +525,51 @@ function runStreamingPythonInference(payload, webContents) {
       }
 
       if (code !== 0 || !finalResult?.ok) {
+        if (wasCanceled || finalResult?.error === 'INFERENCE_CANCELLED') {
+          reject(new Error('Inference cancelled.'));
+          return;
+        }
+
         reject(new Error(finalResult?.error || stderr || `Inference exited with code ${code}.`));
         return;
       }
 
       enrichInferenceResult(finalResult).then(resolve, reject);
     });
+  });
+}
+
+function stopChildProcessTree(child) {
+  return new Promise((resolve) => {
+    if (!child || child.killed) {
+      resolve(true);
+      return;
+    }
+
+    if (process.platform === 'win32' && Number.isInteger(child.pid)) {
+      const killer = spawn('taskkill', ['/pid', String(child.pid), '/T', '/F'], {
+        windowsHide: true,
+        stdio: 'ignore'
+      });
+
+      killer.on('close', () => resolve(true));
+      killer.on('error', () => {
+        try {
+          child.kill('SIGTERM');
+        } catch (_error) {
+          // Ignore failures while attempting to stop process.
+        }
+        resolve(true);
+      });
+      return;
+    }
+
+    try {
+      child.kill('SIGTERM');
+    } catch (_error) {
+      // Ignore failures while attempting to stop process.
+    }
+    resolve(true);
   });
 }
 
@@ -405,7 +590,8 @@ function createProjectRecord(input) {
     updatedAt: now,
     data: {
       training: [],
-      inference: []
+      inference: [],
+      inferenceFrames: []
     },
     models: [],
     trash: []
@@ -781,6 +967,17 @@ ipcMain.handle('files:preview', async (_event, filePath) => {
   };
 });
 
+ipcMain.handle('files:reveal', async (_event, filePath) => {
+  if (!filePath || typeof filePath !== 'string') {
+    throw new Error('File path is required.');
+  }
+
+  const resolvedPath = path.resolve(filePath);
+  await fs.access(resolvedPath);
+  shell.showItemInFolder(resolvedPath);
+  return true;
+});
+
 ipcMain.handle('files:thumbnail', async (_event, filePath) => {
   if (!filePath || typeof filePath !== 'string') {
     throw new Error('File path is required.');
@@ -812,12 +1009,35 @@ ipcMain.handle('files:video-frame', async (_event, filePath) => {
   return getVideoFrameThumbnail(filePath);
 });
 
+ipcMain.handle('files:extract-frames', async (_event, payload) => {
+  return extractVideoFrames(payload || {});
+});
+
 ipcMain.handle('inference:run', async (_event, payload) => {
   if (payload?.display) {
     return runStreamingPythonInference(payload || {}, _event.sender);
   }
 
   return runPythonInference(payload || {});
+});
+
+ipcMain.handle('inference:cancel', async (_event, runId) => {
+  const key = String(runId || '').trim();
+
+  if (!key) {
+    throw new Error('Run id is required to cancel inference.');
+  }
+
+  const child = activeInferenceProcesses.get(key);
+
+  if (!child) {
+    return { ok: false, reason: 'not-running' };
+  }
+
+  activeInferenceProcesses.delete(key);
+  canceledInferenceRuns.add(key);
+  await stopChildProcessTree(child);
+  return { ok: true };
 });
 
 app.whenReady().then(() => {
