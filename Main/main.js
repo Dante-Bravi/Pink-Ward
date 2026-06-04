@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, nativeImage, shell } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, nativeImage, shell } = require('electron');
 const { execFile, spawn } = require('node:child_process');
 const fs = require('node:fs/promises');
 const os = require('node:os');
@@ -12,6 +12,9 @@ const execFileAsync = promisify(execFile);
 let cachedPythonExecutable = null;
 const activeInferenceProcesses = new Map();
 const canceledInferenceRuns = new Set();
+const activeTrainingProcesses = new Map();
+const canceledTrainingRuns = new Set();
+let allowCloseWithActiveTraining = false;
 
 function getStorePath() {
   return path.join(app.getPath('userData'), storeFileName);
@@ -31,6 +34,14 @@ function getExtractFramesScriptPath() {
   }
 
   return path.join(__dirname, 'scripts', 'extract_video_frames.py');
+}
+
+function getTrainingScriptPath() {
+  if (app.isPackaged) {
+    return path.join(process.resourcesPath, 'app.asar.unpacked', 'scripts', 'run_yolo_training.py');
+  }
+
+  return path.join(__dirname, 'scripts', 'run_yolo_training.py');
 }
 
 function getBundledPythonPath() {
@@ -121,6 +132,90 @@ function getPrimaryJson(stdout) {
   }
 
   return null;
+}
+
+function encodeWindows1252Byte(character) {
+  const code = character.codePointAt(0);
+  const cp1252 = new Map([
+    [0x20AC, 0x80],
+    [0x201A, 0x82],
+    [0x0192, 0x83],
+    [0x201E, 0x84],
+    [0x2026, 0x85],
+    [0x2020, 0x86],
+    [0x2021, 0x87],
+    [0x02C6, 0x88],
+    [0x2030, 0x89],
+    [0x0160, 0x8A],
+    [0x2039, 0x8B],
+    [0x0152, 0x8C],
+    [0x017D, 0x8E],
+    [0x2018, 0x91],
+    [0x2019, 0x92],
+    [0x201C, 0x93],
+    [0x201D, 0x94],
+    [0x2022, 0x95],
+    [0x2013, 0x96],
+    [0x2014, 0x97],
+    [0x02DC, 0x98],
+    [0x2122, 0x99],
+    [0x0161, 0x9A],
+    [0x203A, 0x9B],
+    [0x0153, 0x9C],
+    [0x017E, 0x9E],
+    [0x0178, 0x9F]
+  ]);
+
+  if (code <= 0xFF) {
+    return code;
+  }
+
+  return cp1252.get(code) ?? null;
+}
+
+function repairUtf8Mojibake(value) {
+  const text = String(value || '');
+
+  if (!/[ÃÂâ]/.test(text)) {
+    return text;
+  }
+
+  const bytes = [];
+
+  for (const character of text) {
+    const byte = encodeWindows1252Byte(character);
+
+    if (byte === null) {
+      return text;
+    }
+
+    bytes.push(byte);
+  }
+
+  try {
+    const repaired = Buffer.from(bytes).toString('utf8');
+    return repaired.includes('\uFFFD') ? text : repaired;
+  } catch (_error) {
+    return text;
+  }
+}
+
+async function resolveExistingFilePath(filePath) {
+  const candidates = [
+    String(filePath || ''),
+    repairUtf8Mojibake(filePath)
+  ].filter(Boolean);
+
+  for (const candidate of [...new Set(candidates)]) {
+    try {
+      await fs.access(candidate);
+      return candidate;
+    } catch (_error) {
+      // Try the next spelling of the same path.
+    }
+  }
+
+  return String(filePath || '');
 }
 
 async function enrichInferenceResult(result) {
@@ -244,12 +339,122 @@ async function resolvePythonExecutable() {
   throw new Error('Python was not found. Install Python, or set PINK_WARD_PYTHON to the full path of python.exe.');
 }
 
+async function getCudaAvailability() {
+  const fallback = { available: false, source: 'none', error: '' };
+
+  async function probeWithNvidiaSmi() {
+    const candidates = process.platform === 'win32'
+      ? [
+          'nvidia-smi',
+          path.join(process.env.ProgramW6432 || 'C:\\Program Files', 'NVIDIA Corporation', 'NVSMI', 'nvidia-smi.exe'),
+          path.join(process.env.ProgramFiles || 'C:\\Program Files', 'NVIDIA Corporation', 'NVSMI', 'nvidia-smi.exe')
+        ]
+      : ['nvidia-smi'];
+
+    const uniqueCandidates = [...new Set(candidates.filter(Boolean))];
+
+    for (const candidate of uniqueCandidates) {
+      try {
+        const { stdout } = await execFileAsync(candidate, ['--query-gpu=name,driver_version,cuda_version', '--format=csv,noheader'], {
+          cwd: getProcessWorkingDirectory(),
+          windowsHide: true,
+          timeout: 9000
+        });
+
+        const firstLine = String(stdout || '')
+          .split(/\r?\n/)
+          .map((line) => line.trim())
+          .find(Boolean);
+
+        if (firstLine) {
+          return {
+            available: true,
+            source: 'nvidia-smi',
+            error: '',
+            details: firstLine
+          };
+        }
+      } catch (_error) {
+        // Try the next candidate path.
+      }
+    }
+
+    return null;
+  }
+
+  try {
+    const pythonExecutable = await resolvePythonExecutable();
+    const probeScript = [
+      'import json',
+      'result = {"torchInstalled": False, "torchCudaAvailable": False, "cudaVersion": "", "deviceCount": 0, "error": ""}',
+      'try:',
+      '    import torch',
+      '    result["torchInstalled"] = True',
+      '    result["torchCudaAvailable"] = bool(torch.cuda.is_available())',
+      '    result["cudaVersion"] = str(torch.version.cuda or "")',
+      '    result["deviceCount"] = int(torch.cuda.device_count()) if result["torchCudaAvailable"] else 0',
+      'except Exception as exc:',
+      '    result["error"] = str(exc)',
+      'print(json.dumps(result))'
+    ].join('\n');
+    const { stdout } = await execFileAsync(pythonExecutable, ['-c', probeScript], {
+      cwd: getProcessWorkingDirectory(),
+      windowsHide: true,
+      timeout: 12000
+    });
+    const parsed = getPrimaryJson(stdout);
+
+    if (parsed && typeof parsed.torchCudaAvailable === 'boolean') {
+      if (parsed.torchCudaAvailable) {
+        return {
+          available: true,
+          source: 'torch',
+          error: '',
+          details: parsed.cudaVersion ? `PyTorch CUDA ${parsed.cudaVersion}` : 'PyTorch CUDA runtime detected'
+        };
+      }
+
+      const smiProbe = await probeWithNvidiaSmi();
+      if (smiProbe?.available) {
+        return smiProbe;
+      }
+
+      return {
+        available: false,
+        source: 'torch',
+        error: typeof parsed.error === 'string' ? parsed.error : ''
+      };
+    }
+
+    const smiProbe = await probeWithNvidiaSmi();
+    if (smiProbe?.available) {
+      return smiProbe;
+    }
+
+    return {
+      ...fallback,
+      error: 'CUDA probe returned an unreadable response from both probes.'
+    };
+  } catch (error) {
+    const smiProbe = await probeWithNvidiaSmi();
+    if (smiProbe?.available) {
+      return smiProbe;
+    }
+
+    return {
+      ...fallback,
+      error: error?.message || 'CUDA probe failed.'
+    };
+  }
+}
+
 async function runPythonInference(payload) {
   const modelPath = String(payload?.modelPath || '').trim();
   const sourcePath = String(payload?.sourcePath || '').trim();
   const runName = sanitizeFileName(payload?.runName);
   const confidence = Number.isFinite(Number(payload?.confidence)) ? Number(payload.confidence) : 0.25;
   const shouldDisplay = Boolean(payload?.display);
+  const enableTracker = payload?.enableTracker === true;
 
   if (!modelPath) {
     throw new Error('Model path is required.');
@@ -282,6 +487,10 @@ async function runPythonInference(payload) {
     args.push('--stream-json');
   }
 
+  if (enableTracker) {
+    args.push('--enable-tracker');
+  }
+
   const pythonExecutable = await resolvePythonExecutable();
 
   try {
@@ -304,13 +513,262 @@ async function runPythonInference(payload) {
   }
 }
 
+function sendTrainingProgress(webContents, payload) {
+  if (!webContents || webContents.isDestroyed?.()) {
+    return;
+  }
+
+  webContents.send('training:progress', payload);
+}
+
+async function runPythonTraining(payload, webContents) {
+  const runId = String(payload?.runId || `training-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`).trim();
+  const requestedModel = String(payload?.model || '').trim();
+  const requestedModelName = String(payload?.modelName || '').trim();
+  const runName = sanitizeFileName(payload?.runName || requestedModelName || 'training-run');
+  const files = Array.isArray(payload?.files) ? payload.files : [];
+  const hyperparams = payload?.hyperparams && typeof payload.hyperparams === 'object'
+    ? payload.hyperparams
+    : {};
+
+  if (!requestedModel) {
+    throw new Error('Training model is required.');
+  }
+  if (!requestedModelName) {
+    throw new Error('Training model name is required.');
+  }
+
+  const normalizedFiles = files
+    .map((file) => ({
+      name: String(file?.name || '').trim(),
+      relativePath: String(file?.relativePath || '').trim(),
+      absolutePath: String(file?.absolutePath || '').trim(),
+      size: Number(file?.size || 0),
+      type: String(file?.type || 'application/octet-stream').trim()
+    }))
+    .filter((file) => file.absolutePath);
+
+  if (!normalizedFiles.length) {
+    throw new Error('At least one training file is required.');
+  }
+
+  const trainingRoot = path.join(app.getPath('userData'), 'training-runs');
+  const runRoot = path.join(trainingRoot, `${Date.now()}-${runName}`);
+  const datasetRoot = path.join(runRoot, 'dataset');
+  const modelOutputRoot = path.join(runRoot, 'output');
+  const resultPath = path.join(runRoot, 'training-result.json');
+  const progressPath = path.join(runRoot, 'training-progress.json');
+  await fs.mkdir(runRoot, { recursive: true });
+  await fs.mkdir(datasetRoot, { recursive: true });
+  await fs.mkdir(modelOutputRoot, { recursive: true });
+
+  const trainingPayload = {
+    runId,
+    model: requestedModel,
+    modelName: requestedModelName,
+    runName,
+    datasetRoot,
+    outputRoot: modelOutputRoot,
+    files: normalizedFiles,
+    hyperparams
+  };
+  const payloadPath = path.join(runRoot, 'training-payload.json');
+  await fs.writeFile(payloadPath, JSON.stringify(trainingPayload, null, 2), 'utf8');
+
+  const pythonExecutable = await resolvePythonExecutable();
+  const args = [
+    getTrainingScriptPath(),
+    '--payload-json',
+    payloadPath,
+    '--result-json',
+    resultPath,
+    '--progress-json',
+    progressPath
+  ];
+  let lastProgressText = '';
+  let progressReadBusy = false;
+  const readAndSendProgress = async () => {
+    if (progressReadBusy) {
+      return;
+    }
+
+    progressReadBusy = true;
+    try {
+      const progressText = await fs.readFile(progressPath, 'utf8');
+      if (progressText === lastProgressText) {
+        return;
+      }
+
+      lastProgressText = progressText;
+      const progress = JSON.parse(progressText);
+      sendTrainingProgress(webContents, {
+        event: 'progress',
+        ...progress,
+        runId: String(progress?.runId || runId)
+      });
+    } catch (_error) {
+      // The progress file is created by Python after training setup starts.
+    } finally {
+      progressReadBusy = false;
+    }
+  };
+
+  try {
+    sendTrainingProgress(webContents, {
+      runId,
+      event: 'progress',
+      progress: 0,
+      status: 'Training started.'
+    });
+
+    await new Promise((resolve, reject) => {
+      const child = spawn(pythonExecutable, args, {
+        cwd: getProcessWorkingDirectory(),
+        windowsHide: process.platform !== 'win32',
+        stdio: ['ignore', 'inherit', 'inherit']
+      });
+      let settled = false;
+      const progressTimer = setInterval(() => {
+        void readAndSendProgress();
+      }, 750);
+      const timeout = setTimeout(() => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        clearInterval(progressTimer);
+        canceledTrainingRuns.add(runId);
+        activeTrainingProcesses.delete(runId);
+        void stopChildProcessTree(child).finally(() => canceledTrainingRuns.delete(runId));
+        reject(new Error('Training timed out.'));
+      }, 1000 * 60 * 60 * 12);
+
+      activeTrainingProcesses.set(runId, child);
+      void readAndSendProgress();
+
+      child.on('error', (error) => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        clearTimeout(timeout);
+        clearInterval(progressTimer);
+        activeTrainingProcesses.delete(runId);
+        canceledTrainingRuns.delete(runId);
+        reject(error);
+      });
+
+      child.on('close', (code) => {
+        if (settled) {
+          return;
+        }
+
+        settled = true;
+        clearTimeout(timeout);
+        clearInterval(progressTimer);
+        activeTrainingProcesses.delete(runId);
+        const wasCanceled = canceledTrainingRuns.delete(runId);
+        void readAndSendProgress();
+
+        if (wasCanceled) {
+          sendTrainingProgress(webContents, {
+            runId,
+            event: 'progress',
+            progress: 0,
+            status: 'Training cancelled.',
+            canceled: true
+          });
+          reject(new Error('Training cancelled.'));
+          return;
+        }
+
+        if (code !== 0) {
+          reject(new Error(`Training exited with code ${code}.`));
+          return;
+        }
+
+        resolve();
+      });
+    });
+
+    const resultText = await fs.readFile(resultPath, 'utf8');
+    const result = JSON.parse(resultText);
+
+    if (!result?.ok) {
+      throw new Error(result?.error || 'Training finished without a usable result.');
+    }
+
+    const outputFiles = [];
+    const candidatePaths = [
+      result.bestModelPath,
+      result.lastModelPath
+    ].filter(Boolean);
+
+    for (const filePath of candidatePaths) {
+      try {
+        const stat = await fs.stat(filePath);
+        outputFiles.push({
+          path: filePath,
+          name: path.basename(filePath),
+          size: stat.size,
+          lastModified: Math.round(stat.mtimeMs)
+        });
+      } catch (_error) {
+        // Ignore output files that no longer exist.
+      }
+    }
+
+    let resultsCsv = null;
+    if (result.resultsCsvPath) {
+      try {
+        const stat = await fs.stat(result.resultsCsvPath);
+        resultsCsv = {
+          path: result.resultsCsvPath,
+          name: path.basename(result.resultsCsvPath),
+          size: stat.size,
+          lastModified: Math.round(stat.mtimeMs)
+        };
+      } catch (_error) {
+        resultsCsv = null;
+      }
+    }
+
+    return {
+      ...result,
+      outputFiles,
+      resultsCsv
+    };
+  } catch (error) {
+    if (/cancel/i.test(String(error?.message || ''))) {
+      throw new Error('Training cancelled.');
+    }
+
+    let parsedError = "";
+    try {
+      const resultText = await fs.readFile(resultPath, 'utf8');
+      const parsed = JSON.parse(resultText);
+      parsedError = String(parsed?.error || "").trim();
+    } catch (_readError) {
+      // Fall back to the process error below.
+    }
+
+    if (!parsedError && error?.code === 'ENOENT' && error?.path === resultPath) {
+      throw new Error('Training did not produce a result file.');
+    }
+
+    throw new Error(parsedError || error.message || 'Training failed.');
+  }
+}
+
 async function extractVideoFrames(payload) {
-  const sourcePath = String(payload?.sourcePath || '').trim();
+  const requestedSourcePath = String(payload?.sourcePath || '').trim();
+  const requestedSourceName = String(payload?.sourceName || payload?.sourceTitle || '').trim();
   const intervalSeconds = Number(payload?.intervalSeconds);
   const modelPath = String(payload?.modelPath || '').trim();
   const confidence = Number.isFinite(Number(payload?.confidence)) ? Number(payload.confidence) : 0.25;
+  const runId = String(payload?.runId || '').trim();
 
-  if (!sourcePath) {
+  if (!requestedSourcePath) {
     throw new Error('Source path is required.');
   }
 
@@ -318,8 +776,9 @@ async function extractVideoFrames(payload) {
     throw new Error('Interval seconds must be greater than zero.');
   }
 
+  const sourcePath = await resolveExistingFilePath(requestedSourcePath);
   await fs.access(sourcePath);
-  const sourceName = path.parse(sourcePath).name || 'Video';
+  const sourceName = requestedSourceName || path.parse(sourcePath).name || 'Video';
   const outputRoot = path.join(app.getPath('userData'), 'extracted-frames');
   await fs.mkdir(outputRoot, { recursive: true });
   const outputDir = await makeUniqueDirectory(outputRoot, `Extracted frames from ${sourceName}`);
@@ -346,23 +805,82 @@ async function extractVideoFrames(payload) {
 
   let result = null;
   try {
-    const { stdout, stderr } = await execFileAsync(pythonExecutable, args, {
-      cwd: getProcessWorkingDirectory(),
-      windowsHide: true,
-      maxBuffer: 1024 * 1024 * 32,
-      timeout: 1000 * 60 * 60
-    });
-    result = getPrimaryJson(stdout);
+    if (runId) {
+      result = await new Promise((resolve, reject) => {
+        const child = spawn(pythonExecutable, args, {
+          cwd: getProcessWorkingDirectory(),
+          windowsHide: true,
+          stdio: ['ignore', 'pipe', 'pipe']
+        });
+        activeInferenceProcesses.set(runId, child);
+        let stdoutBuffer = '';
+        let stderr = '';
+        let settled = false;
 
-    if (!result?.ok) {
-      throw new Error(result?.error || stderr || 'Frame extraction did not return a usable result.');
+        const finish = (error, resolvedValue = null) => {
+          if (settled) {
+            return;
+          }
+          settled = true;
+          activeInferenceProcesses.delete(runId);
+          if (error) {
+            reject(error);
+            return;
+          }
+          resolve(resolvedValue);
+        };
+
+        child.stdout.setEncoding('utf8');
+        child.stderr.setEncoding('utf8');
+
+        child.stdout.on('data', (chunk) => {
+          stdoutBuffer += chunk;
+        });
+
+        child.stderr.on('data', (chunk) => {
+          stderr += chunk;
+        });
+
+        child.on('error', (error) => {
+          finish(error);
+        });
+
+        child.on('close', (code) => {
+          const wasCanceled = canceledInferenceRuns.has(runId);
+          canceledInferenceRuns.delete(runId);
+          const parsed = getPrimaryJson(stdoutBuffer);
+
+          if (code !== 0 || !parsed?.ok) {
+            if (wasCanceled || parsed?.error === 'INFERENCE_CANCELLED') {
+              finish(new Error('Frame extraction cancelled.'));
+              return;
+            }
+            finish(new Error(parsed?.error || stderr || `Frame extraction exited with code ${code}.`));
+            return;
+          }
+
+          finish(null, parsed);
+        });
+      });
+    } else {
+      const { stdout, stderr } = await execFileAsync(pythonExecutable, args, {
+        cwd: getProcessWorkingDirectory(),
+        windowsHide: true,
+        maxBuffer: 1024 * 1024 * 32,
+        timeout: 1000 * 60 * 60
+      });
+      result = getPrimaryJson(stdout);
+
+      if (!result?.ok) {
+        throw new Error(result?.error || stderr || 'Frame extraction did not return a usable result.');
+      }
     }
   } catch (error) {
     const parsed = getPrimaryJson(error.stdout);
     throw new Error(parsed?.error || error.stderr || error.message || 'Frame extraction failed.');
   }
 
-  const entries = await fs.readdir(outputDir, { withFileTypes: true });
+  const entries = await fs.readdir(outputDir, { withFileTypes: true, recursive: true });
   const frameFiles = [];
   const labelFiles = [];
 
@@ -372,26 +890,30 @@ async function extractVideoFrames(payload) {
     }
 
     const fileName = entry.name;
-    const absolutePath = path.join(outputDir, fileName);
+    const parentPath = entry.parentPath || entry.path || outputDir;
+    const absolutePath = path.join(parentPath, fileName);
+    const relativePath = path.relative(outputDir, absolutePath).replace(/\\/g, '/');
     const stat = await fs.stat(absolutePath);
     const detail = {
       path: absolutePath,
       name: fileName,
+      relativePath,
       size: stat.size,
       lastModified: Math.round(stat.mtimeMs)
     };
 
-    if (/\.(apng|avif|bmp|gif|jpe?g|png|webp)$/i.test(fileName)) {
+    if (/^images\//i.test(relativePath) && /\.(apng|avif|bmp|gif|jpe?g|png|webp)$/i.test(fileName)) {
       frameFiles.push(detail);
       continue;
     }
 
-    if (/\.txt$/i.test(fileName)) {
+    if ((/^labels\//i.test(relativePath) || /^classes\.txt$/i.test(relativePath)) && /\.txt$/i.test(fileName)) {
       labelFiles.push(detail);
     }
   }
 
-  frameFiles.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+  frameFiles.sort((a, b) => a.relativePath.localeCompare(b.relativePath, undefined, { numeric: true, sensitivity: 'base' }));
+  labelFiles.sort((a, b) => a.relativePath.localeCompare(b.relativePath, undefined, { numeric: true, sensitivity: 'base' }));
 
   return {
     ok: true,
@@ -414,6 +936,7 @@ function runStreamingPythonInference(payload, webContents) {
     const sourcePath = String(payload?.sourcePath || '').trim();
     const runName = sanitizeFileName(payload?.runName);
     const confidence = Number.isFinite(Number(payload?.confidence)) ? Number(payload.confidence) : 0.25;
+    const enableTracker = payload?.enableTracker === true;
     const runId = String(payload?.runId || '');
 
     if (!modelPath) {
@@ -450,6 +973,9 @@ function runStreamingPythonInference(payload, webContents) {
       '--display',
       '--stream-json'
     ];
+    if (enableTracker) {
+      args.push('--enable-tracker');
+    }
     const pythonExecutable = await resolvePythonExecutable();
     const child = spawn(pythonExecutable, args, {
       cwd: getProcessWorkingDirectory(),
@@ -573,6 +1099,34 @@ function stopChildProcessTree(child) {
   });
 }
 
+async function cancelTrainingRun(runId) {
+  const key = String(runId || '').trim();
+
+  if (!key) {
+    throw new Error('Run id is required to cancel training.');
+  }
+
+  const child = activeTrainingProcesses.get(key);
+
+  if (!child) {
+    return { ok: false, reason: 'not-running' };
+  }
+
+  canceledTrainingRuns.add(key);
+  await stopChildProcessTree(child);
+  return { ok: true };
+}
+
+async function stopAllTrainingProcesses() {
+  const entries = [...activeTrainingProcesses.entries()];
+
+  entries.forEach(([runId]) => {
+    canceledTrainingRuns.add(runId);
+  });
+
+  await Promise.all(entries.map(([, child]) => stopChildProcessTree(child)));
+}
+
 function createProjectRecord(input) {
   const now = new Date().toISOString();
   const id = `project-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -585,6 +1139,7 @@ function createProjectRecord(input) {
     modelBase: String(input.modelBase || 'Not selected').trim(),
     notes: String(input.notes || '').trim(),
     trainingType: String(input.trainingType || 'detection').trim(),
+    titlePage: { mode: 'default' },
     status: 'No data',
     createdAt: now,
     updatedAt: now,
@@ -855,6 +1410,32 @@ function createMainWindow() {
   mainWindow.once('ready-to-show', () => mainWindow.show());
   mainWindow.on('maximize', () => mainWindow.webContents.send('window:maximized', true));
   mainWindow.on('unmaximize', () => mainWindow.webContents.send('window:maximized', false));
+  mainWindow.on('close', (event) => {
+    if (!activeTrainingProcesses.size || allowCloseWithActiveTraining) {
+      return;
+    }
+
+    event.preventDefault();
+    void (async () => {
+      const { response } = await dialog.showMessageBox(mainWindow, {
+        type: 'warning',
+        buttons: ['Keep Pink Ward Open', 'Close Pink Ward'],
+        defaultId: 0,
+        cancelId: 0,
+        title: 'Close Pink Ward?',
+        message: 'Are you sure you want to close Pink Ward?',
+        detail: 'Training will stop if Pink Ward closes.'
+      });
+
+      if (response !== 1) {
+        return;
+      }
+
+      allowCloseWithActiveTraining = true;
+      await stopAllTrainingProcesses();
+      mainWindow.close();
+    })();
+  });
   mainWindow.loadFile(path.join(__dirname, 'index.html'));
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -939,11 +1520,34 @@ ipcMain.handle('projects:update', async (_event, project) => {
   return store;
 });
 
+ipcMain.handle('projects:delete', async (_event, projectId) => {
+  if (!projectId || typeof projectId !== 'string') {
+    throw new Error('Project id is required.');
+  }
+
+  const store = await readProjectStore();
+  const projectIndex = store.projects.findIndex((candidate) => candidate.id === projectId);
+
+  if (projectIndex === -1) {
+    throw new Error('Project was not found.');
+  }
+
+  store.projects.splice(projectIndex, 1);
+
+  if (store.activeProjectId === projectId || !store.projects.some((project) => project.id === store.activeProjectId)) {
+    store.activeProjectId = store.projects[0]?.id || null;
+  }
+
+  await writeProjectStore(store);
+  return store;
+});
+
 ipcMain.handle('files:preview', async (_event, filePath) => {
   if (!filePath || typeof filePath !== 'string') {
     throw new Error('File path is required.');
   }
 
+  filePath = await resolveExistingFilePath(filePath);
   const extension = path.extname(filePath).toLowerCase();
 
   if (extension === '.txt') {
@@ -972,6 +1576,7 @@ ipcMain.handle('files:reveal', async (_event, filePath) => {
     throw new Error('File path is required.');
   }
 
+  filePath = await resolveExistingFilePath(filePath);
   const resolvedPath = path.resolve(filePath);
   await fs.access(resolvedPath);
   shell.showItemInFolder(resolvedPath);
@@ -983,6 +1588,7 @@ ipcMain.handle('files:thumbnail', async (_event, filePath) => {
     throw new Error('File path is required.');
   }
 
+  filePath = await resolveExistingFilePath(filePath);
   const windowsShellThumbnail = await getWindowsShellThumbnail(filePath);
 
   if (windowsShellThumbnail) {
@@ -1006,11 +1612,16 @@ ipcMain.handle('files:video-frame', async (_event, filePath) => {
     throw new Error('File path is required.');
   }
 
+  filePath = await resolveExistingFilePath(filePath);
   return getVideoFrameThumbnail(filePath);
 });
 
 ipcMain.handle('files:extract-frames', async (_event, payload) => {
   return extractVideoFrames(payload || {});
+});
+
+ipcMain.handle('system:cuda-availability', async () => {
+  return getCudaAvailability();
 });
 
 ipcMain.handle('inference:run', async (_event, payload) => {
@@ -1019,6 +1630,14 @@ ipcMain.handle('inference:run', async (_event, payload) => {
   }
 
   return runPythonInference(payload || {});
+});
+
+ipcMain.handle('training:run', async (_event, payload) => {
+  return runPythonTraining(payload || {}, _event.sender);
+});
+
+ipcMain.handle('training:cancel', async (_event, runId) => {
+  return cancelTrainingRun(runId);
 });
 
 ipcMain.handle('inference:cancel', async (_event, runId) => {

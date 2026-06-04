@@ -16,6 +16,29 @@ def parse_args():
     return parser.parse_args()
 
 
+def get_model_class_names(yolo_model):
+    names = getattr(yolo_model, "names", None)
+
+    if isinstance(names, dict):
+        normalized = []
+        for class_id in sorted(names):
+            try:
+                index = int(class_id)
+            except (TypeError, ValueError):
+                continue
+            if index < 0:
+                continue
+            while len(normalized) <= index:
+                normalized.append(f"class_{len(normalized)}")
+            normalized[index] = str(names[class_id])
+        return normalized
+
+    if isinstance(names, (list, tuple)):
+        return [str(name) for name in names]
+
+    return []
+
+
 def main():
     args = parse_args()
     source = Path(args.source).expanduser().resolve()
@@ -30,7 +53,11 @@ def main():
     if not source.exists():
         raise FileNotFoundError(f"Source video was not found: {source}")
 
-    output_dir.mkdir(parents=True, exist_ok=True)
+    images_dir = output_dir / "images"
+    labels_dir = output_dir / "labels"
+    images_dir.mkdir(parents=True, exist_ok=True)
+    labels_dir.mkdir(parents=True, exist_ok=True)
+    classes_path = output_dir / "classes.txt"
     capture = cv.VideoCapture(str(source))
 
     if not capture.isOpened():
@@ -46,6 +73,7 @@ def main():
     labeled_count = 0
     duration_seconds = float(capture.get(cv.CAP_PROP_FRAME_COUNT) or 0.0) / fps
     yolo_model = None
+    class_names = []
 
     if model_path:
         try:
@@ -56,6 +84,9 @@ def main():
             ) from error
 
         yolo_model = YOLO(model_path)
+        class_names = get_model_class_names(yolo_model)
+
+    classes_path.write_text("\n".join(class_names) + ("\n" if class_names else ""), encoding="utf-8")
 
     while True:
         ok, frame = capture.read()
@@ -65,11 +96,11 @@ def main():
         if frame_index % frame_step == 0:
             timestamp_seconds = frame_index / fps
             file_name = f"frame-{saved_count + 1:06d}-{timestamp_seconds:09.3f}s.jpg"
-            output_path = output_dir / file_name
+            output_path = images_dir / file_name
             cv.imwrite(str(output_path), frame)
 
             if yolo_model is not None:
-                label_path = output_path.with_suffix(".txt")
+                label_path = labels_dir / f"{output_path.stem}.txt"
                 predictions = yolo_model.predict(
                     source=frame,
                     conf=confidence,

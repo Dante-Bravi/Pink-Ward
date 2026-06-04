@@ -28,15 +28,24 @@ contextBridge.exposeInMainWorld('pinkWardDesktop', {
   listProjects: () => ipcRenderer.invoke('projects:list'),
   createProject: (project) => ipcRenderer.invoke('projects:create', project),
   updateProject: (project) => ipcRenderer.invoke('projects:update', project),
+  deleteProject: (projectId) => ipcRenderer.invoke('projects:delete', projectId),
   getFilePath: (file) => webUtils.getPathForFile(file),
   previewFile: (filePath) => ipcRenderer.invoke('files:preview', filePath),
   revealFile: (filePath) => ipcRenderer.invoke('files:reveal', filePath),
   getThumbnail: (filePath) => ipcRenderer.invoke('files:thumbnail', filePath),
   getVideoFrame: (filePath) => ipcRenderer.invoke('files:video-frame', filePath),
   extractFrames: (payload) => ipcRenderer.invoke('files:extract-frames', payload),
+  getCudaAvailability: () => ipcRenderer.invoke('system:cuda-availability'),
+  runTraining: (payload) => ipcRenderer.invoke('training:run', payload),
   runInference: (payload) => ipcRenderer.invoke('inference:run', payload),
+  cancelTraining: (runId) => ipcRenderer.invoke('training:cancel', runId),
   cancelInference: (runId) => ipcRenderer.invoke('inference:cancel', runId),
   fileUrl: (filePath) => fileUrlFromPath(filePath),
+  onTrainingProgress: (callback) => {
+    const listener = (_event, payload) => callback(payload);
+    ipcRenderer.on('training:progress', listener);
+    return () => ipcRenderer.removeListener('training:progress', listener);
+  },
   onInferenceFrame: (callback) => {
     const listener = (_event, payload) => callback(payload);
     ipcRenderer.on('inference:frame', listener);
