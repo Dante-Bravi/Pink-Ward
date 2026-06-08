@@ -7,8 +7,9 @@
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
+    "prestart": "node build-tools/apply-dev-icon.js",
     "start": "electron .",
-    "dist": "electron-builder --win dir --x64"
+    "dist": "electron-builder --win dir --x64 && node build-tools/apply-windows-icon.js"
   },
   "build": {
     "appId": "local.pinkward.workspace",
@@ -38,6 +39,7 @@
       }
     ],
     "win": {
+      "icon": "assets/pink-ward-icon.ico",
       "signAndEditExecutable": false,
       "target": [
         "dir"

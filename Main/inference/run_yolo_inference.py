@@ -352,10 +352,12 @@ def run_video(model, source_path, output_dir, confidence, device, enable_tracker
     def with_time_values(span):
         start_frame = int(span["startFrameIndex"])
         end_frame = int(max(start_frame, int(span["endFrameIndex"])))
+        start_time = ((start_frame - 1) / fps) if fps > 0 else 0
+        end_time = (end_frame / fps) if fps > 0 else start_time
         return {
             **span,
-            "startTimeSeconds": round((start_frame / fps), 3) if fps > 0 else 0,
-            "endTimeSeconds": round((end_frame / fps), 3) if fps > 0 else 0,
+            "startTimeSeconds": round(max(0, start_time), 3),
+            "endTimeSeconds": round(max(start_time, end_time), 3),
         }
 
     tracker_spans = [with_time_values(span) for span in tracker_spans]

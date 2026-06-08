@@ -1,4 +1,5 @@
 import argparse
+import hashlib
 import json
 import math
 import shutil
@@ -8,6 +9,7 @@ from pathlib import Path
 
 IMAGE_EXTENSIONS = {".apng", ".avif", ".bmp", ".gif", ".jpg", ".jpeg", ".png", ".webp"}
 LABEL_EXTENSION = ".txt"
+DEFAULT_VALIDATION_SPLIT = 20
 
 
 def build_parser():
@@ -249,8 +251,8 @@ def write_data_yaml(dataset_root, names):
     data_yaml_path = dataset_root / "data.yaml"
     lines = [
         f'path: "{dataset_root.as_posix()}"',
-        "train: images",
-        "val: images",
+        "train: images/train",
+        "val: images/val",
         "names:",
     ]
 
@@ -302,6 +304,67 @@ def map_files_for_training(file_records):
         pairs.append((entry, image_path, label_path))
 
     return pairs, missing_labels, len(images), len(labels)
+
+
+def normalize_validation_split_percent(value):
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        parsed = DEFAULT_VALIDATION_SPLIT
+
+    if not math.isfinite(parsed):
+        parsed = DEFAULT_VALIDATION_SPLIT
+
+    return max(5.0, min(50.0, parsed))
+
+
+def get_pair_split_key(pair, fallback_index):
+    entry, image_path, label_path = pair
+    key = "|".join([
+        str(entry.get("absolutePath") or image_path),
+        str(entry.get("relativePath") or entry.get("name") or image_path.name),
+        str(label_path),
+        str(fallback_index),
+    ])
+    return hashlib.sha256(key.encode("utf-8", errors="ignore")).hexdigest()
+
+
+def split_pairs_for_training(pairs, validation_split_percent):
+    if len(pairs) <= 1:
+        return pairs, pairs
+
+    normalized_split = normalize_validation_split_percent(validation_split_percent)
+    validation_count = int(round(len(pairs) * (normalized_split / 100.0)))
+    validation_count = max(1, min(len(pairs) - 1, validation_count))
+
+    ordered_pairs = [
+        pair
+        for _, pair in sorted(
+            enumerate(pairs),
+            key=lambda item: get_pair_split_key(item[1], item[0]),
+        )
+    ]
+
+    validation_pairs = ordered_pairs[:validation_count]
+    training_pairs = ordered_pairs[validation_count:]
+    return training_pairs, validation_pairs
+
+
+def copy_training_split(split_name, pairs, images_dir, labels_dir, progress_callback):
+    copied_label_paths = []
+    images_dir.mkdir(parents=True, exist_ok=True)
+    labels_dir.mkdir(parents=True, exist_ok=True)
+
+    for index, (_, image_path, label_path) in enumerate(pairs):
+        stem = f"{index:06d}_{image_path.stem}"
+        image_target = images_dir / f"{stem}{image_path.suffix.lower()}"
+        label_target = labels_dir / f"{stem}.txt"
+        shutil.copy2(image_path, image_target)
+        shutil.copy2(label_path, label_target)
+        copied_label_paths.append(label_target)
+        progress_callback(split_name, index + 1)
+
+    return copied_label_paths
 
 
 def write_progress_json(progress_json_path, payload):
@@ -374,6 +437,7 @@ def train_from_payload(payload, progress_json_path=None):
         raise ValueError("No training files were provided.")
 
     total_epochs = max(1, int(hyperparams.get("epochs", 100)))
+    validation_split_percent = normalize_validation_split_percent(hyperparams.get("validationSplit", DEFAULT_VALIDATION_SPLIT))
 
     def publish_progress(progress, status, **extra):
         write_progress_json(progress_json_path, {
@@ -386,38 +450,59 @@ def train_from_payload(payload, progress_json_path=None):
 
     publish_progress(0.01, "Preparing training data...", epoch=0, totalEpochs=total_epochs)
 
-    dataset_images_dir = dataset_root / "images"
-    dataset_labels_dir = dataset_root / "labels"
-    dataset_images_dir.mkdir(parents=True, exist_ok=True)
-    dataset_labels_dir.mkdir(parents=True, exist_ok=True)
+    dataset_train_images_dir = dataset_root / "images" / "train"
+    dataset_val_images_dir = dataset_root / "images" / "val"
+    dataset_train_labels_dir = dataset_root / "labels" / "train"
+    dataset_val_labels_dir = dataset_root / "labels" / "val"
     output_root.mkdir(parents=True, exist_ok=True)
 
     pairs, missing_labels, total_images, total_labels = map_files_for_training(file_records)
     if not pairs:
         raise ValueError("No valid image-label pairs were found in the selected training data.")
 
-    copied_label_paths = []
-    for index, (_, image_path, label_path) in enumerate(pairs):
-        stem = f"{index:06d}_{image_path.stem}"
-        image_target = dataset_images_dir / f"{stem}{image_path.suffix.lower()}"
-        label_target = dataset_labels_dir / f"{stem}.txt"
-        shutil.copy2(image_path, image_target)
-        shutil.copy2(label_path, label_target)
-        copied_label_paths.append(label_target)
-        if index == len(pairs) - 1 or index % max(1, len(pairs) // 20) == 0:
-            copied_count = index + 1
+    training_pairs, validation_pairs = split_pairs_for_training(pairs, validation_split_percent)
+    copy_total = len(training_pairs) + len(validation_pairs)
+    copied_samples = 0
+
+    def publish_copy_progress(split_name, split_count):
+        nonlocal copied_samples
+        copied_samples += 1
+        if copied_samples == copy_total or copied_samples % max(1, copy_total // 20) == 0:
             publish_progress(
-                0.01 + min((copied_count / len(pairs)) * 0.03, 0.03),
-                f"Preparing training data... {copied_count}/{len(pairs)} samples",
+                0.01 + min((copied_samples / copy_total) * 0.03, 0.03),
+                f"Preparing {split_name} split... {copied_samples}/{copy_total} samples",
                 epoch=0,
                 totalEpochs=total_epochs,
+                validationSplit=validation_split_percent,
             )
+
+    copied_label_paths = []
+    copied_label_paths.extend(copy_training_split(
+        "training",
+        training_pairs,
+        dataset_train_images_dir,
+        dataset_train_labels_dir,
+        publish_copy_progress,
+    ))
+    copied_label_paths.extend(copy_training_split(
+        "validation",
+        validation_pairs,
+        dataset_val_images_dir,
+        dataset_val_labels_dir,
+        publish_copy_progress,
+    ))
 
     class_ids = collect_class_ids(copied_label_paths)
     class_names = resolve_class_names(class_ids, collect_class_names(file_records))
     write_classes_txt(dataset_root, class_names)
     data_yaml_path = write_data_yaml(dataset_root, class_names)
-    publish_progress(0.04, "Starting YOLO training...", epoch=0, totalEpochs=total_epochs)
+    publish_progress(
+        0.04,
+        f"Starting YOLO training with {len(training_pairs)} train / {len(validation_pairs)} validation samples...",
+        epoch=0,
+        totalEpochs=total_epochs,
+        validationSplit=validation_split_percent,
+    )
 
     train_kwargs = {
         "data": str(data_yaml_path),
@@ -493,6 +578,9 @@ def train_from_payload(payload, progress_json_path=None):
         "resultsCsvPath": str(results_csv_path) if results_csv_path.exists() else "",
         "resultsMetrics": parse_results_csv(results_csv_path) if results_csv_path.exists() else None,
         "pairedSamples": len(pairs),
+        "trainSamples": len(training_pairs),
+        "valSamples": len(validation_pairs),
+        "validationSplit": validation_split_percent,
         "totalImages": total_images,
         "totalLabels": total_labels,
         "missingLabels": missing_labels,

@@ -56,6 +56,10 @@ function getProcessWorkingDirectory() {
   return app.isPackaged ? process.resourcesPath : __dirname;
 }
 
+function getAppIconPath() {
+  return path.join(__dirname, 'assets', 'pink-ward-icon.ico');
+}
+
 function emptyStore() {
   return {
     activeProjectId: null,
@@ -1390,6 +1394,8 @@ async function getVideoFrameThumbnail(filePath) {
 }
 
 function createMainWindow() {
+  const appIcon = nativeImage.createFromPath(getAppIconPath());
+
   mainWindow = new BrowserWindow({
     width: 1440,
     height: 960,
@@ -1399,6 +1405,7 @@ function createMainWindow() {
     frame: false,
     show: false,
     title: 'Pink Ward',
+    icon: appIcon,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -1406,6 +1413,7 @@ function createMainWindow() {
     }
   });
 
+  mainWindow.setIcon(appIcon);
   mainWindow.setMenuBarVisibility(false);
   mainWindow.once('ready-to-show', () => mainWindow.show());
   mainWindow.on('maximize', () => mainWindow.webContents.send('window:maximized', true));
@@ -1658,6 +1666,8 @@ ipcMain.handle('inference:cancel', async (_event, runId) => {
   await stopChildProcessTree(child);
   return { ok: true };
 });
+
+app.setAppUserModelId('local.pinkward.workspace');
 
 app.whenReady().then(() => {
   createMainWindow();

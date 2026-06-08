@@ -1570,6 +1570,97 @@
       line-height: 1.45;
     }
 
+    .training-base-weights-picker {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      min-height: 74px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fbfdfb;
+    }
+
+    .training-base-weights-copy {
+      min-width: 0;
+      display: grid;
+      gap: 4px;
+    }
+
+    .training-base-weights-copy strong {
+      color: var(--ink);
+      font-size: 14px;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+
+    .training-base-weights-copy span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .training-base-weights-actions {
+      flex: 0 0 auto;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .training-base-weights-actions .secondary-button[hidden] {
+      display: none;
+    }
+
+    .training-base-weights-actions svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .training-base-weights-message {
+      min-height: 18px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .training-base-weights-message.error {
+      color: #a73838;
+    }
+
+    .training-split-field {
+      gap: 10px;
+    }
+
+    .training-split-label-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .training-split-label-row strong {
+      color: var(--ink);
+      font-size: 13px;
+      line-height: 1.2;
+    }
+
+    .training-split-field input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    .training-split-meta {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
     .hyperparameter-title {
       margin: 8px 0 -2px;
       color: var(--muted);
@@ -3042,9 +3133,9 @@
     .inference-preview-timeline-markers {
       position: relative;
       width: 100%;
-      height: 8px;
+      height: 10px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.13);
       overflow: hidden;
       display: none;
     }
@@ -3053,14 +3144,15 @@
       position: absolute;
       top: 0;
       height: 100%;
-      border-radius: 999px;
-      background: transparent;
-      border: 1px solid rgba(255, 145, 145, 0.9);
+      border-radius: 2px;
+      background: rgba(216, 61, 132, 0.72);
+      border: 0;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
       pointer-events: none;
     }
 
     .inference-preview-timeline-range.active {
-      background: rgba(255, 112, 112, 0.5);
+      background: rgba(216, 61, 132, 0.96);
     }
 
     .inference-preview-important {
@@ -3765,75 +3857,6 @@
 
     .training-hyperparams-grid .field {
       margin-bottom: 0;
-    }
-
-    .training-weight-choice {
-      display: grid;
-      gap: 8px;
-      margin: 4px 0 14px;
-    }
-
-    .training-weight-choice-title {
-      margin: 0;
-      color: var(--ink);
-      font-size: 13px;
-      font-weight: 800;
-    }
-
-    .training-weight-choice-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .training-weight-option {
-      position: relative;
-      cursor: pointer;
-    }
-
-    .training-weight-option input {
-      position: absolute;
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .training-weight-option-card {
-      min-height: 92px;
-      display: grid;
-      gap: 5px;
-      padding: 14px;
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      background: #fbfdfb;
-      transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
-    }
-
-    .training-weight-option-card strong {
-      color: var(--ink);
-      font-size: 15px;
-      line-height: 1.2;
-    }
-
-    .training-weight-option-card span {
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.35;
-    }
-
-    .training-weight-option input:checked + .training-weight-option-card {
-      border-color: rgba(199, 54, 124, 0.62);
-      background: linear-gradient(180deg, #fff7fb, #fff);
-      box-shadow: inset 0 0 0 1px rgba(199, 54, 124, 0.22), 0 10px 22px rgba(199, 54, 124, 0.1);
-    }
-
-    .training-weight-option input:focus-visible + .training-weight-option-card {
-      outline: 2px solid rgba(199, 54, 124, 0.42);
-      outline-offset: 2px;
-    }
-
-    .training-weight-option:hover .training-weight-option-card {
-      transform: translateY(-1px);
-      border-color: var(--line-strong);
     }
 
     .training-hyperparams-advanced {
@@ -4731,11 +4754,12 @@
 
       .main-frame {
         grid-template-columns: 1fr;
+        grid-template-rows: auto minmax(0, 1fr);
       }
 
       .sidebar {
         position: sticky;
-        top: 75px;
+        top: 0;
         z-index: 10;
         display: flex;
         gap: 12px;
@@ -4743,6 +4767,10 @@
         padding: 10px 18px;
         border-right: 0;
         border-bottom: 1px solid var(--line);
+      }
+
+      main {
+        min-height: 0;
       }
 
       .nav-group {
@@ -5402,7 +5430,7 @@
                   <section class="batch-panel" aria-label="Imported training batches">
                     <div class="label-total" aria-label="Total labels">
                       <div>
-                        <span>Total labels</span>
+                        <span>Total Labled Images</span>
                         <strong id="trainingFileTotal">0</strong>
                       </div>
                       <button id="importBatchButton" class="primary-button import-action" type="button" data-import-batch data-import-target="batch">
@@ -5416,7 +5444,7 @@
                 </section>
 
                 <section class="data-entry-section" data-data-view="inference-frames" aria-labelledby="inferenceFramesTitle">
-                  <h3 id="inferenceFramesTitle">Extracted from inference</h3>
+                  <h3 id="inferenceFramesTitle">Infrence Extractions</h3>
                   <section class="batch-panel" aria-label="Extracted frames and labels">
                     <div class="label-total" aria-label="Total extracted files">
                       <div>
@@ -5521,8 +5549,34 @@
                   <select id="trainingSize">
                     <option value="n">Nano (n)</option>
                     <option value="s">Small (s)</option>
-                    <option value="m">Medium (m)</option>
+                    <option value="m" selected>Medium (m)</option>
                   </select>
+                </div>
+                <div class="field training-base-weights">
+                  <label for="trainingBaseWeightsInput">Starting weights</label>
+                  <input id="trainingBaseWeightsInput" type="file" accept=".pt" hidden>
+                  <div class="training-base-weights-picker">
+                    <div class="training-base-weights-copy">
+                      <strong id="trainingBaseWeightsTitle">Default YOLO weights</strong>
+                      <span id="trainingBaseWeightsMeta">YOLO v8 - Nano (n)</span>
+                    </div>
+                    <div class="training-base-weights-actions">
+                      <button id="chooseTrainingBaseWeightsButton" class="secondary-button" type="button">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+                        Import Weights
+                      </button>
+                      <button id="clearTrainingBaseWeightsButton" class="secondary-button" type="button" hidden>Use Default</button>
+                    </div>
+                  </div>
+                  <p id="trainingBaseWeightsMessage" class="training-base-weights-message"></p>
+                </div>
+                <div class="field training-split-field">
+                  <div class="training-split-label-row">
+                    <label for="trainingValidationSplit">Validation split</label>
+                    <strong id="trainingValidationSplitValue">20%</strong>
+                  </div>
+                  <input id="trainingValidationSplit" type="range" min="5" max="50" step="1" value="20">
+                  <p id="trainingValidationSplitMeta" class="training-split-meta">80% train / 20% validation</p>
                 </div>
                 <div class="train-actions">
                   <button id="openTrainDataSelectionButton" class="primary-button" type="button" disabled>Train</button>
@@ -5556,7 +5610,7 @@
               <div class="stats-grid">
                 <div class="stat"><span>Inference</span><strong id="storageInferenceTotal">0 B</strong></div>
                 <div class="stat"><span>Training</span><strong id="storageTrainingTotal">0 B</strong></div>
-                <div class="stat"><span>Extracted From Inference</span><strong id="storageExtractedInferenceTotal">0 B</strong></div>
+                <div class="stat"><span>Infrence Extractions</span><strong id="storageExtractedInferenceTotal">0 B</strong></div>
                 <div class="stat"><span>Unlabeled Videos</span><strong id="storageUnlabeledVideosTotal">0 B</strong></div>
                 <div class="stat"><span>Unlabeled Images</span><strong id="storageUnlabeledImagesTotal">0 B</strong></div>
               </div>
@@ -5755,11 +5809,11 @@
       <div class="training-hyperparams-grid">
         <div class="field">
           <label for="trainingHyperEpochs">Epochs</label>
-          <input id="trainingHyperEpochs" type="number" min="1" value="120">
+          <input id="trainingHyperEpochs" type="number" min="1" value="100">
         </div>
         <div class="field">
           <label for="trainingHyperImgSize">Img size</label>
-          <input id="trainingHyperImgSize" type="number" min="1" value="960">
+          <input id="trainingHyperImgSize" type="number" min="1" value="640">
         </div>
         <div class="field">
           <label for="trainingHyperLearningRate">Learning rate</label>
@@ -5770,32 +5824,12 @@
           <input id="trainingHyperWorkers" type="number" min="0" value="8">
         </div>
         <div class="field">
-          <label for="trainingHyperBatch">Batches</label>
+          <label for="trainingHyperBatch">Batch size</label>
           <input id="trainingHyperBatch" type="number" min="1" value="16">
         </div>
         <div class="field">
           <label for="trainingHyperPatience">Patience</label>
-          <input id="trainingHyperPatience" type="number" min="0" value="100">
-        </div>
-      </div>
-
-      <div class="training-weight-choice" role="radiogroup" aria-labelledby="trainingWeightChoiceTitle">
-        <p id="trainingWeightChoiceTitle" class="training-weight-choice-title">Weights file to save</p>
-        <div class="training-weight-choice-grid">
-          <label class="training-weight-option" for="trainingWeightBest">
-            <input id="trainingWeightBest" name="trainingWeightChoice" type="radio" value="best" checked required>
-            <span class="training-weight-option-card">
-              <strong>Best epoch</strong>
-              <span>Use <b>best.pt</b>, the checkpoint with the best validation score.</span>
-            </span>
-          </label>
-          <label class="training-weight-option" for="trainingWeightLast">
-            <input id="trainingWeightLast" name="trainingWeightChoice" type="radio" value="last" required>
-            <span class="training-weight-option-card">
-              <strong>Last epoch</strong>
-              <span>Use <b>last.pt</b>, the final checkpoint from the training run.</span>
-            </span>
-          </label>
+          <input id="trainingHyperPatience" type="number" min="0" value="30">
         </div>
       </div>
 
@@ -5985,24 +6019,6 @@
             <div id="modelResultsCsvStatus" class="file-count" aria-live="polite">No results.csv selected.</div>
           </div>
         </div>
-        <div class="model-results-divider" aria-hidden="true"></div>
-        <div class="model-results-source-block">
-          <p class="model-results-source-title">Results.csv Metric Source</p>
-          <div id="modelResultsMetricSourceField" class="field model-results-metric-field">
-            <div class="model-results-metric-choice" role="radiogroup" aria-label="Choose metric source">
-              <label class="metric-choice-option" for="modelResultsMetricSourceBest">
-                <input id="modelResultsMetricSourceBest" type="radio" name="modelResultsMetricSource" value="best" checked>
-                <span class="metric-choice-option-title">Best Epoch</span>
-                <span class="metric-choice-option-hint">Uses strongest metrics in the run.</span>
-              </label>
-              <label class="metric-choice-option" for="modelResultsMetricSourceLast">
-                <input id="modelResultsMetricSourceLast" type="radio" name="modelResultsMetricSource" value="last">
-                <span class="metric-choice-option-title">Last Epoch</span>
-                <span class="metric-choice-option-hint">Uses metrics from final epoch.</span>
-              </label>
-            </div>
-          </div>
-        </div>
       </div>
       <div class="import-actions">
         <button id="cancelImportButton" class="secondary-button" type="button">Cancel</button>
@@ -6068,7 +6084,7 @@
         <div class="field">
           <label for="inferenceRunType">Inference type</label>
           <select id="inferenceRunType">
-            <option value="watch">Watch Inference</option>
+            <option value="watch">Infrence from Recorded Video</option>
           </select>
         </div>
         <div class="field">
@@ -6117,7 +6133,7 @@
         <div class="field">
           <label for="quickInferenceRunType">Inference type</label>
           <select id="quickInferenceRunType">
-            <option value="watch">Watch Inference</option>
+            <option value="watch">Infrence from Recorded Video</option>
           </select>
         </div>
         <div class="field quick-inference-confidence">
@@ -6390,6 +6406,15 @@
     const trainingVersion = document.getElementById("trainingVersion");
     const trainingSize = document.getElementById("trainingSize");
     const trainingModelName = document.getElementById("trainingModelName");
+    const trainingBaseWeightsInput = document.getElementById("trainingBaseWeightsInput");
+    const trainingBaseWeightsTitle = document.getElementById("trainingBaseWeightsTitle");
+    const trainingBaseWeightsMeta = document.getElementById("trainingBaseWeightsMeta");
+    const trainingBaseWeightsMessage = document.getElementById("trainingBaseWeightsMessage");
+    const chooseTrainingBaseWeightsButton = document.getElementById("chooseTrainingBaseWeightsButton");
+    const clearTrainingBaseWeightsButton = document.getElementById("clearTrainingBaseWeightsButton");
+    const trainingValidationSplit = document.getElementById("trainingValidationSplit");
+    const trainingValidationSplitValue = document.getElementById("trainingValidationSplitValue");
+    const trainingValidationSplitMeta = document.getElementById("trainingValidationSplitMeta");
     const openTrainDataSelectionButton = document.getElementById("openTrainDataSelectionButton");
     const trainingDataOverlay = document.getElementById("trainingDataOverlay");
     const trainingDataDialogTitle = document.getElementById("trainingDataDialogTitle");
@@ -6414,8 +6439,6 @@
     const trainingCompleteFileCount = document.getElementById("trainingCompleteFileCount");
     const closeTrainingCompleteButton = document.getElementById("closeTrainingCompleteButton");
     const viewTrainingModelButton = document.getElementById("viewTrainingModelButton");
-    const trainingWeightBest = document.getElementById("trainingWeightBest");
-    const trainingWeightLast = document.getElementById("trainingWeightLast");
     const trainingHyperEpochs = document.getElementById("trainingHyperEpochs");
     const trainingHyperImgSize = document.getElementById("trainingHyperImgSize");
     const trainingHyperLearningRate = document.getElementById("trainingHyperLearningRate");
@@ -6443,9 +6466,129 @@
     ];
     let activeModelSort = { key: "last-used", direction: "desc" };
     let selectedTrainingBatchIds = new Set();
+    let trainingHyperparamsSaveTimer = null;
+    const DEFAULT_TRAINING_VALIDATION_SPLIT = 20;
 
     function getTrainingModelName() {
       return String(trainingModelName?.value || "").trim();
+    }
+
+    function normalizeTrainingValidationSplitPercent(value) {
+      const parsed = Number(value);
+      if (!Number.isFinite(parsed)) {
+        return DEFAULT_TRAINING_VALIDATION_SPLIT;
+      }
+      return Math.max(5, Math.min(50, Math.round(parsed)));
+    }
+
+    function getTrainingValidationSplitPercent(project = getActiveProject()) {
+      if (project && project.trainingValidationSplitPercent !== undefined) {
+        return normalizeTrainingValidationSplitPercent(project.trainingValidationSplitPercent);
+      }
+      return normalizeTrainingValidationSplitPercent(trainingValidationSplit?.value);
+    }
+
+    function updateTrainingValidationSplitState(value = null) {
+      const splitPercent = normalizeTrainingValidationSplitPercent(value ?? getTrainingValidationSplitPercent());
+      const trainPercent = 100 - splitPercent;
+
+      if (trainingValidationSplit) {
+        trainingValidationSplit.value = String(splitPercent);
+        trainingValidationSplit.disabled = !getActiveProject();
+      }
+      if (trainingValidationSplitValue) {
+        trainingValidationSplitValue.textContent = `${splitPercent}%`;
+      }
+      if (trainingValidationSplitMeta) {
+        trainingValidationSplitMeta.textContent = `${trainPercent}% train / ${splitPercent}% validation`;
+      }
+    }
+
+    async function saveTrainingValidationSplitPercent(value) {
+      const project = getActiveProject();
+      const splitPercent = normalizeTrainingValidationSplitPercent(value);
+
+      if (!project) {
+        updateTrainingValidationSplitState(splitPercent);
+        return;
+      }
+
+      project.trainingValidationSplitPercent = splitPercent;
+      await saveActiveProject(project, { render: false });
+      updateTrainingValidationSplitState(splitPercent);
+    }
+
+    function getTrainingBaseWeightsRecord(project = getActiveProject()) {
+      const record = project?.trainingBaseWeights;
+      const absolutePath = String(record?.absolutePath || "").trim();
+      return absolutePath ? { ...record, absolutePath } : null;
+    }
+
+    function getDefaultTrainingBaseWeightsLabel() {
+      return formatTrainingModelSelection();
+    }
+
+    function updateTrainingBaseWeightsState(message = "", isError = false) {
+      const project = getActiveProject();
+      const record = getTrainingBaseWeightsRecord(project);
+      const hasProject = Boolean(project);
+
+      if (record) {
+        trainingBaseWeightsTitle.textContent = record.name || "Imported weights";
+        trainingBaseWeightsMeta.textContent = `${formatBytes(Number(record.size || 0))} - ${record.absolutePath}`;
+      } else {
+        trainingBaseWeightsTitle.textContent = "Default YOLO weights";
+        trainingBaseWeightsMeta.textContent = getDefaultTrainingBaseWeightsLabel();
+      }
+
+      chooseTrainingBaseWeightsButton.disabled = !hasProject;
+      clearTrainingBaseWeightsButton.hidden = !record;
+      clearTrainingBaseWeightsButton.disabled = !hasProject;
+      trainingBaseWeightsMessage.textContent = message || (!hasProject ? "Open a project before importing starting weights." : "");
+      trainingBaseWeightsMessage.classList.toggle("error", Boolean(isError));
+    }
+
+    async function saveTrainingBaseWeightsRecord(record) {
+      const project = getActiveProject();
+
+      if (!project) {
+        updateTrainingBaseWeightsState("Open a project before importing starting weights.", true);
+        return;
+      }
+
+      project.trainingBaseWeights = record || null;
+      await saveActiveProject(project, { render: false });
+      updateTrainingBaseWeightsState();
+    }
+
+    async function stageTrainingBaseWeightsFile(file) {
+      if (!file) {
+        return;
+      }
+
+      if (!isSupportedTrainingBaseWeightFile(file)) {
+        trainingBaseWeightsInput.value = "";
+        updateTrainingBaseWeightsState("Choose a YOLO .pt weights file.", true);
+        return;
+      }
+
+      const absolutePath = String(projectApi.getFilePath?.(file) || "").trim();
+      if (!absolutePath) {
+        trainingBaseWeightsInput.value = "";
+        updateTrainingBaseWeightsState("The selected weights file does not have an accessible path.", true);
+        return;
+      }
+
+      await saveTrainingBaseWeightsRecord({
+        name: file.name || "model.pt",
+        size: Number(file.size || 0),
+        type: file.type || "application/octet-stream",
+        relativePath: getFileRelativePath(file),
+        absolutePath,
+        lastModified: Number(file.lastModified || Date.now()),
+        importedAt: new Date().toISOString()
+      });
+      trainingBaseWeightsInput.value = "";
     }
 
     function updateTrainingStartState() {
@@ -6455,6 +6598,7 @@
 
       const hasProject = Boolean(getActiveProject());
       openTrainDataSelectionButton.disabled = !hasProject || !getTrainingModelName();
+      updateTrainingBaseWeightsState();
     }
 
     const projectApi = window.pinkWardDesktop && window.pinkWardDesktop.createProject
@@ -6684,36 +6828,94 @@
       quickInferenceMessage.textContent = `Ready to run with ${model.name}.`;
     }
 
-    function stageQuickInferenceFiles(files, sourceType = "files") {
-      const incomingFiles = Array.from(files || []);
-      const rejectedCount = incomingFiles.filter((file) => !isSupportedInferenceFile(file)).length;
-      quickInferenceFiles = incomingFiles.filter(isSupportedInferenceFile);
-      quickInferenceSourceType = sourceType;
-
-      if (quickInferenceFiles.length) {
-        const folderNames = getTopLevelImportNames(quickInferenceFiles);
-        const suggestedName = sourceType === "folder"
-          ? folderNames.length > 1
-            ? `${folderNames.length} folders`
-            : folderNames[0] || "Selected folder"
-          : quickInferenceFiles.length === 1
-            ? quickInferenceFiles[0].name || "Selected file"
-            : `${quickInferenceFiles.length} files`;
-        if (!quickInferenceBatchName.value.trim()) {
-          quickInferenceBatchName.value = suggestedName || "";
-        }
+    function getQuickInferenceFileKey(file) {
+      const absolutePath = String(projectApi.getFilePath?.(file) || file?.absolutePath || "").trim().toLowerCase();
+      if (absolutePath) {
+        return `path:${absolutePath}`;
       }
 
+      const relativePath = String(getFileRelativePath(file) || "").trim().toLowerCase();
+      const name = String(file?.name || "").trim().toLowerCase();
+      return [
+        relativePath || name,
+        Number(file?.size || 0),
+        Number(file?.lastModified || 0),
+        String(file?.type || "").trim().toLowerCase()
+      ].join("::");
+    }
+
+    function mergeQuickInferenceSourceType(previousType, nextType, hadFilesBefore) {
+      const safePreviousType = previousType || "files";
+      const safeNextType = nextType || "files";
+      if (!hadFilesBefore) {
+        return safeNextType;
+      }
+      return safePreviousType === safeNextType ? safePreviousType : "mixed";
+    }
+
+    function getQuickInferenceSuggestedName(files, sourceType = "files") {
+      if (!files.length) {
+        return "";
+      }
+
+      if (sourceType === "folder") {
+        const folderNames = getTopLevelImportNames(files);
+        return folderNames.length > 1
+          ? `${folderNames.length} folders`
+          : folderNames[0] || "Selected folder";
+      }
+
+      return files.length === 1
+        ? files[0].name || "Selected file"
+        : `${files.length} files`;
+    }
+
+    function updateQuickInferenceSelectedCount(rejectedCount = 0, duplicateCount = 0) {
       const folderNames = getTopLevelImportNames(quickInferenceFiles);
       const sourceLabel = folderNames.length > 1 ? `${folderNames.length} folders` : folderNames[0];
+      const notes = [
+        rejectedCount ? `${rejectedCount.toLocaleString()} rejected` : "",
+        duplicateCount ? `${duplicateCount.toLocaleString()} already selected` : ""
+      ].filter(Boolean);
+      const noteSuffix = notes.length ? `, ${notes.join(", ")}` : "";
+
       quickInferenceSelectedCount.textContent = quickInferenceFiles.length
-        ? sourceType === "folder" && sourceLabel
-          ? `${sourceLabel} - ${quickInferenceFiles.length.toLocaleString()} files ready${rejectedCount ? `, ${rejectedCount.toLocaleString()} rejected` : ""}`
-          : `${quickInferenceFiles.length.toLocaleString()} files ready${rejectedCount ? `, ${rejectedCount.toLocaleString()} rejected` : ""}`
+        ? quickInferenceSourceType === "folder" && sourceLabel
+          ? `${sourceLabel} - ${quickInferenceFiles.length.toLocaleString()} files ready${noteSuffix}`
+          : `${quickInferenceFiles.length.toLocaleString()} files ready${noteSuffix}`
         : rejectedCount
           ? `${rejectedCount.toLocaleString()} unsupported files rejected`
           : "No files selected";
+    }
 
+    function stageQuickInferenceFiles(files, sourceType = "files") {
+      const incomingFiles = Array.from(files || []);
+      const supportedFiles = incomingFiles.filter(isSupportedInferenceFile);
+      const rejectedCount = incomingFiles.length - supportedFiles.length;
+      const hadFilesBefore = quickInferenceFiles.length > 0;
+      const seenFileKeys = new Set(quickInferenceFiles.map(getQuickInferenceFileKey));
+      const newFiles = supportedFiles.filter((file) => {
+        const fileKey = getQuickInferenceFileKey(file);
+        if (seenFileKeys.has(fileKey)) {
+          return false;
+        }
+        seenFileKeys.add(fileKey);
+        return true;
+      });
+      const duplicateCount = supportedFiles.length - newFiles.length;
+
+      if (newFiles.length) {
+        quickInferenceFiles = [...quickInferenceFiles, ...newFiles];
+        quickInferenceSourceType = mergeQuickInferenceSourceType(quickInferenceSourceType, sourceType, hadFilesBefore);
+      }
+
+      if (quickInferenceFiles.length && !quickInferenceBatchName.value.trim()) {
+        quickInferenceBatchName.value = getQuickInferenceSuggestedName(quickInferenceFiles, quickInferenceSourceType);
+      }
+
+      updateQuickInferenceSelectedCount(rejectedCount, duplicateCount);
+      quickInferenceFileInput.value = "";
+      quickInferenceFolderInput.value = "";
       updateQuickInferenceConfirmState();
     }
 
@@ -7044,17 +7246,38 @@
         : [];
     }
 
+    function getDetectionSpanMinimumDurationSeconds() {
+      const fps = Math.max(0, Number(activePreviewImportantTimeline?.sourceFps || 0));
+      return Math.max(0.35, fps > 0 ? (4 / fps) : 0);
+    }
+
+    function expandDetectionSpanForRecognition(span) {
+      const minimumDuration = getDetectionSpanMinimumDurationSeconds();
+      const timelineDuration = getPreviewTimelineDuration(Number(activePreviewVideoElement?.duration || 0));
+      let startTimeSeconds = Math.max(0, Number(span?.startTimeSeconds || 0));
+      let endTimeSeconds = Math.max(startTimeSeconds, Number(span?.endTimeSeconds || startTimeSeconds));
+
+      if (endTimeSeconds - startTimeSeconds < minimumDuration) {
+        const centerTime = (startTimeSeconds + endTimeSeconds) / 2;
+        startTimeSeconds = Math.max(0, centerTime - (minimumDuration / 2));
+        endTimeSeconds = startTimeSeconds + minimumDuration;
+
+        if (timelineDuration > 0 && endTimeSeconds > timelineDuration) {
+          endTimeSeconds = timelineDuration;
+          startTimeSeconds = Math.max(0, endTimeSeconds - minimumDuration);
+        }
+      }
+
+      return {
+        ...span,
+        startTimeSeconds,
+        endTimeSeconds
+      };
+    }
+
     function getSortedPreviewDetectionSpans() {
       return getPreviewDetectionSpans()
-        .map((span) => {
-          const startTimeSeconds = Math.max(0, Number(span?.startTimeSeconds || 0));
-          const endTimeSeconds = Math.max(startTimeSeconds, Number(span?.endTimeSeconds || startTimeSeconds));
-          return {
-            ...span,
-            startTimeSeconds,
-            endTimeSeconds
-          };
-        })
+        .map(expandDetectionSpanForRecognition)
         .filter((span) => span.endTimeSeconds >= span.startTimeSeconds)
         .sort((left, right) => left.startTimeSeconds - right.startTimeSeconds || left.endTimeSeconds - right.endTimeSeconds);
     }
@@ -7068,13 +7291,7 @@
       return Math.max(0.15, getDetectionSpanToleranceSeconds() * 2);
     }
 
-    function getPreviewDetectionPlaybackSpans() {
-      const sortedSpans = getSortedPreviewDetectionSpans();
-      if (!sortedSpans.length) {
-        return [];
-      }
-
-      const mergeGapSeconds = getDetectionPlaybackMergeGapSeconds();
+    function mergePreviewDetectionSpans(sortedSpans, mergeGapSeconds) {
       return sortedSpans.reduce((mergedSpans, span) => {
         const previousSpan = mergedSpans[mergedSpans.length - 1];
         if (!previousSpan) {
@@ -7087,12 +7304,35 @@
         const previousEndTime = Number(previousSpan.endTimeSeconds || previousSpan.startTimeSeconds || 0);
         if (startTime <= previousEndTime + mergeGapSeconds) {
           previousSpan.endTimeSeconds = Math.max(previousEndTime, endTime);
+          previousSpan.endFrameIndex = Math.max(Number(previousSpan.endFrameIndex || 0), Number(span.endFrameIndex || 0));
           return mergedSpans;
         }
 
         mergedSpans.push({ ...span });
         return mergedSpans;
       }, []);
+    }
+
+    function getPreviewDetectionPlaybackSpans() {
+      const sortedSpans = getSortedPreviewDetectionSpans();
+      if (!sortedSpans.length) {
+        return [];
+      }
+
+      return mergePreviewDetectionSpans(sortedSpans, getDetectionPlaybackMergeGapSeconds());
+    }
+
+    function getDetectionTimelineMergeGapSeconds() {
+      return Math.max(0.45, getDetectionSpanToleranceSeconds() * 8);
+    }
+
+    function getPreviewDetectionTimelineSpans() {
+      const sortedSpans = getSortedPreviewDetectionSpans();
+      if (!sortedSpans.length) {
+        return [];
+      }
+
+      return mergePreviewDetectionSpans(sortedSpans, getDetectionTimelineMergeGapSeconds());
     }
 
     function findNextDetectionSpan(currentTimeSeconds, spans = getPreviewDetectionPlaybackSpans()) {
@@ -7160,8 +7400,7 @@
       };
     }
 
-    function getTimelineSpanPosition(span, duration) {
-      const minWidthPercent = 0.8;
+    function getTimelineSpanPosition(span, duration, minWidthPercent = 0.2) {
       let startPercent = Math.max(0, Math.min((Number(span.startTimeSeconds || 0) / duration) * 100, 100));
       let endPercent = Math.max(0, Math.min((Number(span.endTimeSeconds || 0) / duration) * 100, 100));
       if (endPercent - startPercent < minWidthPercent) {
@@ -7200,7 +7439,7 @@
       const duration = activeDuration > 0
         ? activeDuration
         : getPreviewTimelineDuration(0);
-      const detectionSpans = getPreviewDetectionSpans();
+      const detectionSpans = getPreviewDetectionTimelineSpans();
 
       if (!(duration > 0) || !detectionSpans.length) {
         inferencePreviewTimelineMarkers.innerHTML = "";
@@ -7388,11 +7627,17 @@
       let targetTime = null;
 
       if (direction === "previous") {
-        if (activeIndex > 0) {
-          targetSpan = spans[activeIndex - 1];
-        } else if (activeIndex === -1) {
-          targetSpan = findPreviousDetectionSpan(currentTime, spans);
+        const toleranceSeconds = getDetectionSpanToleranceSeconds();
+        const previousCompletedSpan = [...spans]
+          .reverse()
+          .find((span) => Number(span.endTimeSeconds || span.startTimeSeconds || 0) < currentTime - toleranceSeconds);
+
+        if (activeIndex >= 0) {
+          targetSpan = previousCompletedSpan || spans[0];
+        } else {
+          targetSpan = previousCompletedSpan || findPreviousDetectionSpan(currentTime, spans);
         }
+
         if (!targetSpan) {
           targetSpan = spans[0];
         }
@@ -7432,6 +7677,57 @@
       const lastSpan = spans[spans.length - 1];
       const lastEndTime = Math.max(0, Number(lastSpan.endTimeSeconds || lastSpan.startTimeSeconds || 0));
       return currentTime >= lastEndTime - getDetectionSpanToleranceSeconds();
+    }
+
+    function cancelInferencePreviewDetectionEndMonitor() {
+      if (!inferencePreviewDetectionEndFrame) {
+        return;
+      }
+
+      window.cancelAnimationFrame(inferencePreviewDetectionEndFrame);
+      inferencePreviewDetectionEndFrame = 0;
+    }
+
+    function stopInferencePreviewAtDetectionEnd(endTimeSeconds) {
+      if (!activePreviewVideoElement) {
+        return false;
+      }
+
+      const endTime = Math.max(0, Number(endTimeSeconds || 0));
+      inferencePreviewDetectionSkipGuard = true;
+      activePreviewVideoElement.pause();
+      if (Math.abs((Number(activePreviewVideoElement.currentTime) || 0) - endTime) > 0.025) {
+        activePreviewVideoElement.currentTime = endTime;
+      }
+      inferencePreviewDetectionSkipGuard = false;
+      cancelInferencePreviewDetectionEndMonitor();
+      scheduleInferencePreviewVideoFit();
+      updateInferencePreviewControls();
+      return true;
+    }
+
+    function monitorInferencePreviewDetectionEnd() {
+      inferencePreviewDetectionEndFrame = 0;
+
+      if (!inferencePreviewDetectionsOnly || inferencePreviewDetectionSkipGuard || !activePreviewVideoElement || activePreviewVideoElement.paused) {
+        return;
+      }
+
+      enforceInferencePreviewDetectionsOnly();
+
+      if (!inferencePreviewDetectionsOnly || !activePreviewVideoElement || activePreviewVideoElement.paused) {
+        return;
+      }
+
+      inferencePreviewDetectionEndFrame = window.requestAnimationFrame(monitorInferencePreviewDetectionEnd);
+    }
+
+    function scheduleInferencePreviewDetectionEndMonitor() {
+      if (inferencePreviewDetectionEndFrame || !inferencePreviewDetectionsOnly || !activePreviewVideoElement || activePreviewVideoElement.paused) {
+        return;
+      }
+
+      inferencePreviewDetectionEndFrame = window.requestAnimationFrame(monitorInferencePreviewDetectionEnd);
     }
 
     function restartInferencePreviewDetectionsOnlyPlayback() {
@@ -7478,12 +7774,13 @@
         if (nextSpan) {
           activePreviewVideoElement.currentTime = Math.max(0, Number(nextSpan.startTimeSeconds || 0));
         } else {
-          activePreviewVideoElement.pause();
-          activePreviewVideoElement.currentTime = activeEndTime;
+          inferencePreviewDetectionSkipGuard = false;
+          return stopInferencePreviewAtDetectionEnd(activeEndTime);
         }
         inferencePreviewDetectionSkipGuard = false;
         scheduleInferencePreviewVideoFit();
         updateInferencePreviewControls();
+        scheduleInferencePreviewDetectionEndMonitor();
         return true;
       }
 
@@ -7493,21 +7790,13 @@
         activePreviewVideoElement.currentTime = Math.max(0, Number(nextSpan.startTimeSeconds || 0));
         inferencePreviewDetectionSkipGuard = false;
         scheduleInferencePreviewVideoFit();
+        scheduleInferencePreviewDetectionEndMonitor();
         return true;
       }
 
       const lastSpan = spans[spans.length - 1];
       const lastEndTime = Math.max(0, Number(lastSpan.endTimeSeconds || lastSpan.startTimeSeconds || 0));
-      if (!activePreviewVideoElement.paused) {
-        activePreviewVideoElement.pause();
-      }
-      if (Math.abs(currentTime - lastEndTime) > 0.025) {
-        inferencePreviewDetectionSkipGuard = true;
-        activePreviewVideoElement.currentTime = lastEndTime;
-        inferencePreviewDetectionSkipGuard = false;
-        scheduleInferencePreviewVideoFit();
-      }
-      return true;
+      return stopInferencePreviewAtDetectionEnd(lastEndTime);
     }
 
     function setInferencePreviewDetectionsOnly(isEnabled) {
@@ -7517,6 +7806,9 @@
 
       if (inferencePreviewDetectionsOnly) {
         seekInferencePreviewToDetectionSpan({ wrapToFirst: true });
+        scheduleInferencePreviewDetectionEndMonitor();
+      } else {
+        cancelInferencePreviewDetectionEndMonitor();
       }
     }
 
@@ -7532,6 +7824,12 @@
       scheduleInferencePreviewVideoFit();
       if (event?.type === "timeupdate" || event?.type === "play" || event?.type === "seeked" || event?.type === "ended") {
         enforceInferencePreviewDetectionsOnly();
+      }
+      if (event?.type === "play" || event?.type === "seeked" || event?.type === "timeupdate") {
+        scheduleInferencePreviewDetectionEndMonitor();
+      }
+      if (event?.type === "pause" || event?.type === "ended") {
+        cancelInferencePreviewDetectionEndMonitor();
       }
       updateInferencePreviewControls();
     }
@@ -7734,6 +8032,7 @@
     }
 
     function detachPreviewVideoElement() {
+      cancelInferencePreviewDetectionEndMonitor();
       clearInferencePreviewVideoCanvas();
 
       if (!activePreviewVideoElement) {
@@ -8108,18 +8407,20 @@
       if (activePreviewVideoElement) {
         if (activePreviewVideoElement.paused) {
           if (inferencePreviewDetectionsOnly) {
-            if (isAtDetectionOnlyPlaybackEnd()) {
+            if (activePreviewVideoElement.ended) {
               restartInferencePreviewDetectionsOnlyPlayback();
             } else {
-              seekInferencePreviewToDetectionSpan({ wrapToFirst: true });
+              seekInferencePreviewToDetectionSpan({ wrapToFirst: false });
             }
           }
           const playPromise = activePreviewVideoElement.play();
           if (playPromise && typeof playPromise.catch === "function") {
             playPromise.catch(() => {});
           }
+          scheduleInferencePreviewDetectionEndMonitor();
         } else {
           activePreviewVideoElement.pause();
+          cancelInferencePreviewDetectionEndMonitor();
         }
         updateInferencePreviewControls();
         return;
@@ -8503,6 +8804,7 @@
     let inferencePreviewLastTimelineValue = 0;
     let inferencePreviewDetectionsOnly = false;
     let inferencePreviewDetectionSkipGuard = false;
+    let inferencePreviewDetectionEndFrame = 0;
     let activeInferenceGalleryFiles = [];
     let activeInferenceVideoGalleryOutputId = null;
     let activePreviewVideoElement = null;
@@ -8637,6 +8939,11 @@
     function isSupportedWeightFile(file) {
       const filePath = String(file.relativePath || file.name || "").toLowerCase();
       return /\.(pt|pth|onnx|engine|weights|bin|safetensors|tflite|pb)$/i.test(filePath);
+    }
+
+    function isSupportedTrainingBaseWeightFile(file) {
+      const filePath = String(file?.relativePath || file?.name || "").toLowerCase();
+      return /\.pt$/i.test(filePath);
     }
 
     function isStandaloneMediaImport(files = []) {
@@ -9969,7 +10276,7 @@
               <p class="item-name">${escapeHtml(run.name || run.sourceName || "Inference run")}</p>
               <p class="item-meta">${escapeHtml(run.project.name)} - ${escapeHtml(run.modelName || "No model")} - ${escapeHtml(run.outputDir || formatDateTime(run.startedAt))}</p>
             </div>
-            <span class="pill ${inferenceResultClass(run.result)}">${escapeHtml(run.result || run.typeLabel || "Watch Inference")}</span>
+            <span class="pill ${inferenceResultClass(run.result)}">${escapeHtml(run.result || run.typeLabel || "Infrence from Recorded Video")}</span>
           </a>
         `).join("");
       }
@@ -13275,6 +13582,9 @@
         if (trainingModelName) {
           trainingModelName.value = "";
         }
+        applyTrainingHyperparamsToDialog(null);
+        updateTrainingValidationSplitState(DEFAULT_TRAINING_VALIDATION_SPLIT);
+        updateTrainingBaseWeightsState();
         trainingFileTotal.textContent = "0";
         inferenceFrameFileTotal.textContent = "0";
         unlabeledVideoFileTotal.textContent = "0";
@@ -13298,6 +13608,9 @@
       if (trainingModelName && document.activeElement !== trainingModelName) {
         trainingModelName.value = String(project.trainingModelName || "");
       }
+      applyTrainingHyperparamsToDialog(project);
+      updateTrainingValidationSplitState(getTrainingValidationSplitPercent(project));
+      updateTrainingBaseWeightsState();
       trainingFileTotal.textContent = countTrainingLabels(project).toLocaleString();
       inferenceFrameFileTotal.textContent = countProjectFiles(project, "inference-frames").toLocaleString();
       unlabeledVideoFileTotal.textContent = countProjectFiles(project, "unlabeled-videos").toLocaleString();
@@ -13970,6 +14283,10 @@
       await saveActiveProject(project);
     });
 
+    [trainingArchitecture, trainingVersion, trainingSize].forEach((select) => {
+      select?.addEventListener("change", () => updateTrainingBaseWeightsState());
+    });
+
     trainingModelName?.addEventListener("input", () => {
       updateTrainingStartState();
     });
@@ -13984,6 +14301,59 @@
       project.trainingModelName = getTrainingModelName();
       await saveActiveProject(project);
       updateTrainingStartState();
+    });
+
+    chooseTrainingBaseWeightsButton?.addEventListener("click", () => {
+      trainingBaseWeightsInput?.click();
+    });
+
+    clearTrainingBaseWeightsButton?.addEventListener("click", async () => {
+      try {
+        await saveTrainingBaseWeightsRecord(null);
+      } catch (error) {
+        updateTrainingBaseWeightsState(error.message || "Could not clear starting weights.", true);
+      }
+    });
+
+    trainingBaseWeightsInput?.addEventListener("change", async () => {
+      const selectedFile = trainingBaseWeightsInput.files?.[0] || null;
+      try {
+        await stageTrainingBaseWeightsFile(selectedFile);
+      } catch (error) {
+        trainingBaseWeightsInput.value = "";
+        updateTrainingBaseWeightsState(error.message || "Could not import starting weights.", true);
+      }
+    });
+
+    trainingValidationSplit?.addEventListener("input", () => {
+      updateTrainingValidationSplitState(trainingValidationSplit.value);
+    });
+
+    trainingValidationSplit?.addEventListener("change", async () => {
+      await saveTrainingValidationSplitPercent(trainingValidationSplit.value);
+    });
+
+    trainingHyperparamsOverlay?.addEventListener("input", (event) => {
+      const control = event.target.closest("input[id^='trainingHyper'], select[id^='trainingHyper']");
+      if (control) {
+        scheduleTrainingHyperparamsSave();
+      }
+    });
+
+    trainingHyperparamsOverlay?.addEventListener("change", async (event) => {
+      const control = event.target.closest("input[id^='trainingHyper'], select[id^='trainingHyper']");
+      if (!control) {
+        return;
+      }
+
+      try {
+        window.clearTimeout(trainingHyperparamsSaveTimer);
+        trainingHyperparamsSaveTimer = null;
+        await saveTrainingHyperparamsForProject();
+      } catch (error) {
+        trainingHyperparamsMessage.textContent = error.message || "Could not save hyperparameters.";
+        trainingHyperparamsMessage.classList.add("error");
+      }
     });
 
     openTrainDataSelectionButton?.addEventListener("click", openTrainingDataDialog);
@@ -14172,12 +14542,6 @@
       }
 
       const trainingWeightChoice = getTrainingWeightChoice();
-      if (!trainingWeightChoice) {
-        trainingHyperparamsMessage.textContent = "Choose Best epoch or Last epoch weights before starting training.";
-        trainingHyperparamsMessage.classList.add("error");
-        trainingWeightBest?.focus();
-        return;
-      }
 
       const selectedBatchIdList = [...selectedTrainingBatchIds];
       const selectedBatchIdSet = new Set(selectedBatchIdList);
@@ -14203,6 +14567,16 @@
       trainingHyperparamsMessage.textContent = "";
       trainingHyperparamsMessage.classList.remove("error");
       const uiParams = collectTrainingHyperparamsFromDialog();
+      window.clearTimeout(trainingHyperparamsSaveTimer);
+      trainingHyperparamsSaveTimer = null;
+      project.trainingHyperparameters = { ...uiParams };
+      try {
+        await saveActiveProject(project, { render: false });
+      } catch (error) {
+        trainingHyperparamsMessage.textContent = error.message || "Could not save hyperparameters.";
+        trainingHyperparamsMessage.classList.add("error");
+        return;
+      }
       const trainingRunId = `training-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const trainingRun = {
         id: trainingRunId,
@@ -14239,35 +14613,28 @@
           throw new Error(`Training finished but ${trainingWeightChoice}.pt was not produced.`);
         }
 
-        const selectedOutputKey = String(selectedOutput?.path || selectedOutput?.name || "");
-        const orderedOutputFiles = [
-          selectedOutput,
-          ...outputFiles.filter((file) => {
-            const fileKey = String(file?.path || file?.name || "");
-            return file !== selectedOutput && fileKey !== selectedOutputKey;
-          })
-        ];
         const nowIso = new Date().toISOString();
         const modelId = `model-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
         const savedModelBaseName = String(result?.modelName || trainingPayload.modelName || "Trained model");
         const savedModelName = appendTrainingWeightChoiceSuffix(savedModelBaseName, trainingWeightChoice);
-        const mappedModelFiles = orderedOutputFiles.map((file) => ({
+        const mappedModelFiles = [selectedOutput].map((file) => ({
           name: String(file?.name || "model.pt"),
           size: Number(file?.size || 0),
           type: "application/octet-stream",
           relativePath: String(file?.name || "model.pt"),
-          absolutePath: String(file?.path || ""),
+          absolutePath: String(file?.path || file?.absolutePath || ""),
           lastModified: Number(file?.lastModified || Date.now())
         })).filter((file) => file.absolutePath);
 
-        const resultsCsv = result?.resultsCsv
+        const resultsCsvPath = String(result?.resultsCsv?.path || result?.resultsCsv?.absolutePath || result?.resultsCsvPath || "").trim();
+        const resultsCsv = resultsCsvPath
           ? {
-              name: String(result.resultsCsv.name || "results.csv"),
-              size: Number(result.resultsCsv.size || 0),
+              name: String(result?.resultsCsv?.name || "results.csv"),
+              size: Number(result?.resultsCsv?.size || 0),
               type: "text/csv",
-              relativePath: String(result.resultsCsv.name || "results.csv"),
-              absolutePath: String(result.resultsCsv.path || ""),
-              lastModified: Number(result.resultsCsv.lastModified || 0)
+              relativePath: String(result?.resultsCsv?.name || "results.csv"),
+              absolutePath: resultsCsvPath,
+              lastModified: Number(result?.resultsCsv?.lastModified || Date.now())
             }
           : null;
 
@@ -14282,15 +14649,24 @@
           fileCount: mappedModelFiles.length,
           files: mappedModelFiles,
           createdAt: nowIso,
+          trainingValidationSplitPercent: getTrainingValidationSplitPercent(project),
+          trainingSampleSplit: result?.trainSamples || result?.valSamples
+            ? {
+                train: Number(result?.trainSamples || 0),
+                validation: Number(result?.valSamples || 0)
+              }
+            : null,
           resultsCsv,
+          resultsMetricSource: trainingWeightChoice,
           resultsMetrics: result?.resultsMetrics || null,
-          resultsCsvError: ""
+          resultsCsvError: resultsCsv ? "" : "Training finished but results.csv was not produced."
         };
 
-        project.models = project.models || [];
-        project.models = [modelRecord, ...project.models];
-        markSelectedTrainingBatchesAsTrainedByModel(project, modelId, selectedBatchIdList);
-        await saveActiveProject(project);
+        if (!mappedModelFiles.length) {
+          throw new Error("Training finished but the selected model file could not be saved.");
+        }
+
+        await saveTrainedModelToProject(project.id, modelRecord, selectedBatchIdList);
 
         finishBottomInferenceProgress("Training completed.");
         closeTrainingHyperparamsDialog({ force: true });
@@ -14752,38 +15128,36 @@
     cancelRenameButton.addEventListener("click", closeRenameBatchDialog);
     confirmRenameButton.addEventListener("click", renameBatch);
 
-    validationSetOverlay.addEventListener("click", (event) => {
-      if (event.target === validationSetOverlay) {
-        closeValidationSetWindow();
+    function addBackdropCloseHandler(overlay, closeHandler) {
+      if (!overlay || typeof closeHandler !== "function") {
+        return;
       }
-    });
 
-    filePreviewOverlay.addEventListener("click", (event) => {
-      if (event.target === filePreviewOverlay) {
-        closeFilePreviewWindow();
-      }
-    });
+      let pointerStartedOnBackdrop = false;
+      overlay.addEventListener("pointerdown", (event) => {
+        pointerStartedOnBackdrop = event.target === overlay;
+      });
+      overlay.addEventListener("pointercancel", () => {
+        pointerStartedOnBackdrop = false;
+      });
+      overlay.addEventListener("click", (event) => {
+        const shouldClose = pointerStartedOnBackdrop && event.target === overlay;
+        pointerStartedOnBackdrop = false;
+        if (shouldClose) {
+          closeHandler(event);
+        }
+      });
+    }
+
+    addBackdropCloseHandler(validationSetOverlay, closeValidationSetWindow);
+    addBackdropCloseHandler(filePreviewOverlay, closeFilePreviewWindow);
 
     document.addEventListener("fullscreenchange", updateFilePreviewFullscreenButton);
     document.addEventListener("webkitfullscreenchange", updateFilePreviewFullscreenButton);
 
-    inferenceRunOverlay.addEventListener("click", (event) => {
-      if (event.target === inferenceRunOverlay) {
-        closeInferenceRunDialog();
-      }
-    });
-
-    renameOverlay.addEventListener("click", (event) => {
-      if (event.target === renameOverlay) {
-        closeRenameBatchDialog();
-      }
-    });
-
-    modelPinOverlay?.addEventListener("click", (event) => {
-      if (event.target === modelPinOverlay) {
-        closeModelPinDialog();
-      }
-    });
+    addBackdropCloseHandler(inferenceRunOverlay, closeInferenceRunDialog);
+    addBackdropCloseHandler(renameOverlay, closeRenameBatchDialog);
+    addBackdropCloseHandler(modelPinOverlay, closeModelPinDialog);
 
     renameBatchName.addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
@@ -15086,11 +15460,7 @@
 
     closeDataRecordButton.addEventListener("click", closeDataRecordPopup);
     deleteAllErrorButton.addEventListener("click", deleteAllErrorFiles);
-    dataRecordOverlay.addEventListener("click", (event) => {
-      if (event.target === dataRecordOverlay) {
-        closeDataRecordPopup();
-      }
-    });
+    addBackdropCloseHandler(dataRecordOverlay, closeDataRecordPopup);
 
     dataRecordList.addEventListener("click", (event) => {
       const openButton = event.target.closest("[data-open-detail-file-index]");
@@ -15455,11 +15825,7 @@
 
       updateBottomTrainingProgress(payload);
     });
-    projectInferenceOverlay.addEventListener("click", (event) => {
-      if (event.target === projectInferenceOverlay) {
-        closeProjectInferencePicker();
-      }
-    });
+    addBackdropCloseHandler(projectInferenceOverlay, closeProjectInferencePicker);
     inferencePreviewOverlay.addEventListener("click", (event) => {
       const imageButton = event.target.closest("[data-inference-gallery-index]");
       if (imageButton) {
@@ -15481,10 +15847,8 @@
         return;
       }
 
-      if (event.target === inferencePreviewOverlay) {
-        closeInferencePreview();
-      }
     });
+    addBackdropCloseHandler(inferencePreviewOverlay, closeInferencePreview);
     document.addEventListener("keydown", (event) => {
       const targetTag = String(event.target?.tagName || "").toLowerCase();
       const isTypingTarget = Boolean(event.target?.isContentEditable) || targetTag === "input" || targetTag === "textarea" || targetTag === "select";
@@ -15515,16 +15879,8 @@
       setInferencePreviewFullscreen(false);
     });
     closeInferenceImagePopupButton.addEventListener("click", closeInferenceImagePopup);
-    inferenceImagePopupOverlay.addEventListener("click", (event) => {
-      if (event.target === inferenceImagePopupOverlay) {
-        closeInferenceImagePopup();
-      }
-    });
-    extractFramesOverlay.addEventListener("click", (event) => {
-      if (event.target === extractFramesOverlay) {
-        closeExtractFramesDialog();
-      }
-    });
+    addBackdropCloseHandler(inferenceImagePopupOverlay, closeInferenceImagePopup);
+    addBackdropCloseHandler(extractFramesOverlay, closeExtractFramesDialog);
     function createBatchFolder(name, frameCount, sourceLabel) {
       const importedDate = new Intl.DateTimeFormat("en-US", {
         month: "short",
@@ -15717,10 +16073,7 @@
         return;
       }
 
-      const modeSuffix = stagedModelResultsMetricSource
-        ? ` - ${getResultsMetricSourceLabel(stagedModelResultsMetricSource)}`
-        : " - choose Best or Last";
-      modelResultsCsvStatus.textContent = `${stagedModelResultsCsvFile.name} (${formatBytes(stagedModelResultsCsvFile.size || 0)})${modeSuffix}`;
+      modelResultsCsvStatus.textContent = `${stagedModelResultsCsvFile.name} (${formatBytes(stagedModelResultsCsvFile.size || 0)})`;
       clearModelResultsCsvButton.hidden = false;
     }
 
@@ -15901,6 +16254,11 @@
     }
 
     function formatTrainingModelSelection() {
+      const customWeights = getTrainingBaseWeightsRecord();
+      if (customWeights) {
+        return `Imported weights - ${customWeights.name || "model.pt"}`;
+      }
+
       const architecture = trainingArchitecture?.selectedOptions?.[0]?.textContent?.trim() || "YOLO";
       const version = trainingVersion?.value || "v8";
       const size = trainingSize?.selectedOptions?.[0]?.textContent?.trim() || "Nano (n)";
@@ -15908,6 +16266,11 @@
     }
 
     function resolveTrainingBaseModelWeights() {
+      const customWeights = getTrainingBaseWeightsRecord();
+      if (customWeights?.absolutePath) {
+        return customWeights.absolutePath;
+      }
+
       const architecture = String(trainingArchitecture?.value || "yolo").toLowerCase();
       const version = String(trainingVersion?.value || "v8").toLowerCase();
       const size = String(trainingSize?.value || "m").toLowerCase();
@@ -15935,9 +16298,7 @@
     }
 
     function getTrainingWeightChoice() {
-      const selected = trainingHyperparamsOverlay.querySelector('input[name="trainingWeightChoice"]:checked');
-      const value = String(selected?.value || "").trim().toLowerCase();
-      return value === "best" || value === "last" ? value : "";
+      return "best";
     }
 
     function appendTrainingWeightChoiceSuffix(modelName, weightChoice) {
@@ -15964,6 +16325,7 @@
         lr0: toNumber(uiValues.LearningRate),
         workers: toNumber(uiValues.Workers),
         batch: toNumber(uiValues.Batch),
+        validationSplit: getTrainingValidationSplitPercent(),
         advanced: {
           patience: toNumber(uiValues.Patience),
           optimizer: String(uiValues.Optimizer || "auto"),
@@ -16026,6 +16388,44 @@
       });
 
       return { taggedFiles, totalFiles };
+    }
+
+    async function saveTrainedModelToProject(projectId, modelRecord, selectedBatchIdList = []) {
+      const normalizedProjectId = String(projectId || "").trim();
+      const normalizedModelId = String(modelRecord?.id || "").trim();
+
+      if (!normalizedProjectId || !normalizedModelId) {
+        throw new Error("Training finished but the model could not be saved to the project.");
+      }
+
+      projectStore = await projectApi.listProjects();
+      const freshProject = getProjectById(normalizedProjectId);
+
+      if (!freshProject) {
+        throw new Error("Training finished but the project was not found. The trained files are still on disk.");
+      }
+
+      ensureProjectData(freshProject);
+      freshProject.models = Array.isArray(freshProject.models) ? freshProject.models : [];
+      freshProject.models = [
+        modelRecord,
+        ...freshProject.models.filter((model) => String(model?.id || "") !== normalizedModelId)
+      ];
+      markSelectedTrainingBatchesAsTrainedByModel(freshProject, normalizedModelId, selectedBatchIdList);
+
+      const savedStore = await saveActiveProject(freshProject);
+      const savedProject = (savedStore?.projects || []).find((candidate) => String(candidate?.id || "") === normalizedProjectId);
+      const savedModel = (savedProject?.models || []).find((model) => String(model?.id || "") === normalizedModelId);
+
+      if (!savedModel) {
+        throw new Error("Training finished, but the trained model could not be added to the Models list.");
+      }
+
+      if (modelRecord.resultsCsv && !savedModel.resultsCsv?.absolutePath) {
+        throw new Error("Training finished, but results.csv could not be attached to the saved model.");
+      }
+
+      return { project: savedProject, model: savedModel };
     }
 
     function clearTrainingBatchesForModel(project, modelId) {
@@ -16191,13 +16591,11 @@
       }
 
       trainingHyperparamsSubtitle.textContent = `${selectedTrainingBatchIds.size.toLocaleString()} training ${selectedTrainingBatchIds.size === 1 ? "batch" : "batches"} selected for ${formatTrainingModelSelection()}.`;
+      applyTrainingHyperparamsToDialog(getActiveProject());
       trainingHyperparamsOverlay.classList.add("open");
       trainingHyperparamsOverlay.setAttribute("aria-hidden", "false");
       trainingHyperparamsMessage.textContent = "";
       trainingHyperparamsMessage.classList.remove("error");
-      if (trainingWeightBest) {
-        trainingWeightBest.checked = true;
-      }
       trainingHyperEpochs.focus();
       trainingHyperEpochs.select();
     }
@@ -16233,6 +16631,114 @@
       });
 
       return values;
+    }
+
+    function getDefaultTrainingHyperparamsFromDialog() {
+      const hyperparamInputs = Array.from(trainingHyperparamsOverlay.querySelectorAll("input, select"));
+      const values = {};
+
+      hyperparamInputs.forEach((element) => {
+        if (!element.id) {
+          return;
+        }
+
+        const key = element.id.replace(/^trainingHyper/, "");
+        if (element.tagName === "SELECT") {
+          const defaultOption = Array.from(element.options).find((option) => option.defaultSelected);
+          values[key] = defaultOption?.value ?? element.options[0]?.value ?? "";
+          return;
+        }
+
+        if (element.type === "radio") {
+          if (element.defaultChecked) {
+            values[element.name || key] = element.defaultValue;
+          }
+          return;
+        }
+
+        if (element.type === "number") {
+          values[key] = Number(element.defaultValue);
+          return;
+        }
+
+        values[key] = element.defaultValue;
+      });
+
+      return values;
+    }
+
+    function applyTrainingHyperparamsToDialog(project = getActiveProject()) {
+      const defaults = getDefaultTrainingHyperparamsFromDialog();
+      const savedValues = project?.trainingHyperparameters && typeof project.trainingHyperparameters === "object"
+        ? project.trainingHyperparameters
+        : {};
+      const values = { ...defaults, ...savedValues };
+      const hyperparamInputs = Array.from(trainingHyperparamsOverlay.querySelectorAll("input, select"));
+
+      hyperparamInputs.forEach((element) => {
+        if (!element.id) {
+          return;
+        }
+
+        const key = element.id.replace(/^trainingHyper/, "");
+        const value = values[element.name || key];
+
+        if (element.type === "radio") {
+          element.checked = String(element.value) === String(value);
+          return;
+        }
+
+        if (element.tagName === "SELECT") {
+          const hasOption = Array.from(element.options).some((option) => String(option.value) === String(value));
+          element.value = hasOption ? String(value) : String(defaults[key] ?? "");
+          return;
+        }
+
+        if (element.type === "number") {
+          const numericValue = Number(value);
+          const defaultValue = Number(defaults[key]);
+          element.value = String(Number.isFinite(numericValue) ? numericValue : defaultValue);
+          return;
+        }
+
+        element.value = String(value ?? defaults[key] ?? "");
+      });
+    }
+
+    async function saveTrainingHyperparamsForProject(project = getActiveProject()) {
+      if (!project) {
+        return;
+      }
+
+      project.trainingHyperparameters = collectTrainingHyperparamsFromDialog();
+      await saveActiveProject(project, { render: false });
+    }
+
+    function scheduleTrainingHyperparamsSave() {
+      const project = getActiveProject();
+      if (!project) {
+        return;
+      }
+
+      const projectId = String(project.id || "");
+      const values = collectTrainingHyperparamsFromDialog();
+      project.trainingHyperparameters = { ...values };
+      window.clearTimeout(trainingHyperparamsSaveTimer);
+      trainingHyperparamsSaveTimer = window.setTimeout(async () => {
+        trainingHyperparamsSaveTimer = null;
+        const targetProject = getProjectById(projectId);
+        if (!targetProject) {
+          return;
+        }
+
+        targetProject.trainingHyperparameters = { ...values };
+        try {
+          await saveActiveProject(targetProject, { render: false });
+        } catch (error) {
+          trainingHyperparamsMessage.textContent = error.message || "Could not save hyperparameters.";
+          trainingHyperparamsMessage.classList.add("error");
+        }
+      }, 250);
     }
 
     function updateConfirmImportState() {
@@ -16654,15 +17160,9 @@
         let resultsCsvError = "";
 
         if (stagedModelResultsCsvFile) {
-          const selectedMetricSource = String(stagedModelResultsMetricSource || "").toLowerCase();
-          if (selectedMetricSource !== "best" && selectedMetricSource !== "last") {
-            modelResultsCsvStatus.textContent = "Choose Best or Last for results.csv before importing.";
-            confirmImportButton.disabled = false;
-            return;
-          }
           try {
             const csvText = await stagedModelResultsCsvFile.text();
-            parsedResultsMetrics = parseModelResultsCsvText(csvText, selectedMetricSource);
+            parsedResultsMetrics = parseModelResultsCsvText(csvText, "best");
           } catch (error) {
             resultsCsvError = error.message || "Could not parse results.csv";
           }
@@ -16688,7 +17188,7 @@
                 lastModified: Number(stagedModelResultsCsvFile.lastModified || 0)
               }
             : null,
-          resultsMetricSource: stagedModelResultsMetricSource || "",
+          resultsMetricSource: stagedModelResultsCsvFile ? "best" : "",
           resultsMetrics: parsedResultsMetrics,
           resultsCsvError
         };
@@ -16800,39 +17300,16 @@
     });
     resultsMetricSourceCancelButton?.addEventListener("click", closeResultsMetricSourceDialog);
     confirmAttachResultsCsvButton?.addEventListener("click", confirmAttachResultsCsvToModel);
-    resultsMetricSourceOverlay?.addEventListener("click", (event) => {
-      if (event.target === resultsMetricSourceOverlay) {
-        closeResultsMetricSourceDialog();
-      }
-    });
+    addBackdropCloseHandler(resultsMetricSourceOverlay, closeResultsMetricSourceDialog);
     cancelImportButton.addEventListener("click", closeImportDialog);
     confirmImportButton.addEventListener("click", confirmImport);
     importBatchName.addEventListener("input", updateConfirmImportState);
     importInferenceConfidence.addEventListener("input", syncImportInferenceConfidenceLabel);
 
-    importOverlay.addEventListener("click", (event) => {
-      if (event.target === importOverlay) {
-        closeImportDialog();
-      }
-    });
-
-    trainingDataOverlay.addEventListener("click", (event) => {
-      if (event.target === trainingDataOverlay) {
-        closeTrainingDataDialog();
-      }
-    });
-
-    trainingHyperparamsOverlay.addEventListener("click", (event) => {
-      if (event.target === trainingHyperparamsOverlay) {
-        closeTrainingHyperparamsDialog();
-      }
-    });
-
-    trainingCompleteOverlay.addEventListener("click", (event) => {
-      if (event.target === trainingCompleteOverlay) {
-        closeTrainingCompleteDialog();
-      }
-    });
+    addBackdropCloseHandler(importOverlay, closeImportDialog);
+    addBackdropCloseHandler(trainingDataOverlay, closeTrainingDataDialog);
+    addBackdropCloseHandler(trainingHyperparamsOverlay, closeTrainingHyperparamsDialog);
+    addBackdropCloseHandler(trainingCompleteOverlay, closeTrainingCompleteDialog);
 
     closeTrainingCompleteButton.addEventListener("click", closeTrainingCompleteDialog);
 
@@ -16947,11 +17424,7 @@
       }
     });
 
-    trashConfirmOverlay.addEventListener("click", (event) => {
-      if (event.target === trashConfirmOverlay) {
-        closeTrashConfirmDialog(false);
-      }
-    });
+    addBackdropCloseHandler(trashConfirmOverlay, () => closeTrashConfirmDialog(false));
 
     cancelTrashConfirmButton.addEventListener("click", () => {
       closeTrashConfirmDialog(false);
@@ -16961,11 +17434,7 @@
       closeTrashConfirmDialog(true);
     });
 
-    projectDeleteOverlay.addEventListener("click", (event) => {
-      if (event.target === projectDeleteOverlay) {
-        closeProjectDeleteDialog(false);
-      }
-    });
+    addBackdropCloseHandler(projectDeleteOverlay, () => closeProjectDeleteDialog(false));
 
     projectDeleteNameInput.addEventListener("input", syncProjectDeleteConfirmState);
     projectDeleteNameInput.addEventListener("keydown", (event) => {
