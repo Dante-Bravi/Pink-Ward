@@ -2,6 +2,7 @@ import base64
 import base64
 import argparse
 import json
+import re
 import sys
 import time
 from pathlib import Path
@@ -17,6 +18,7 @@ def build_parser():
     parser.add_argument("--model", required=True, help="Path to YOLO model weights.")
     parser.add_argument("--source", required=True, help="Path to an image, video, or directory.")
     parser.add_argument("--output-dir", required=True, help="Directory where annotated outputs should be written.")
+    parser.add_argument("--output-name", default="", help="User-assigned Pink Ward name for generated output files.")
     parser.add_argument("--conf", type=float, default=0.25, help="Confidence threshold.")
     parser.add_argument("--display", action="store_true", help="Compatibility flag for caller.")
     parser.add_argument("--stream-json", action="store_true", help="Emit JSON progress events.")
@@ -32,6 +34,12 @@ def require_existing_path(path_value, label):
         raise FileNotFoundError(f"{label} was not found: {path}")
 
     return path
+
+
+def sanitize_output_name(value, fallback):
+    cleaned = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "-", str(value or ""))
+    cleaned = re.sub(r"\s+", " ", cleaned).strip().rstrip(". ")
+    return cleaned[:80] or fallback
 
 
 def summarize_source(source):
@@ -145,19 +153,19 @@ def choose_device():
     return "cpu"
 
 
-def output_image_path(source_path, output_dir):
+def output_image_path(source_path, output_dir, output_name=""):
     extension = source_path.suffix.lower()
     if extension not in IMAGE_EXTENSIONS:
         extension = ".jpg"
-    return output_dir / f"{source_path.stem}{extension}"
+    return output_dir / f"{sanitize_output_name(output_name, source_path.stem)}{extension}"
 
 
-def output_video_path(source_path, output_dir):
-    return output_dir / f"{source_path.stem}-detected.mp4"
+def output_video_path(source_path, output_dir, output_name=""):
+    return output_dir / f"{sanitize_output_name(output_name, source_path.stem)}-detected.mp4"
 
 
-def create_video_writer(cv, source_path, output_dir, fps, size):
-    output_path = output_video_path(source_path, output_dir)
+def create_video_writer(cv, source_path, output_dir, fps, size, output_name=""):
+    output_path = output_video_path(source_path, output_dir, output_name)
     codec_options = ("avc1", "H264", "mp4v")
 
     for codec in codec_options:
@@ -191,13 +199,13 @@ def run_model_once(model, frame_or_path, confidence, device, enable_tracker=Fals
     return model.predict(**kwargs)
 
 
-def run_image(model, source_path, output_dir, confidence, device, enable_tracker=False, tracker_config="botsort.yaml", stream_json=False):
+def run_image(model, source_path, output_dir, confidence, device, enable_tracker=False, tracker_config="botsort.yaml", stream_json=False, output_name=""):
     import cv2 as cv
 
     results = run_model_once(model, str(source_path), confidence, device, enable_tracker, tracker_config)
     result = results[0]
     annotated = result.plot(font_size=5, line_width=1)
-    out_path = output_image_path(source_path, output_dir)
+    out_path = output_image_path(source_path, output_dir, output_name)
     cv.imwrite(str(out_path), annotated)
 
     boxes = getattr(result, "boxes", None)
@@ -219,7 +227,7 @@ def run_image(model, source_path, output_dir, confidence, device, enable_tracker
     }
 
 
-def run_video(model, source_path, output_dir, confidence, device, enable_tracker=False, tracker_config="botsort.yaml", stream_json=False):
+def run_video(model, source_path, output_dir, confidence, device, enable_tracker=False, tracker_config="botsort.yaml", stream_json=False, output_name=""):
     import cv2 as cv
 
     capture = cv.VideoCapture(str(source_path))
@@ -236,7 +244,7 @@ def run_video(model, source_path, output_dir, confidence, device, enable_tracker
         raise RuntimeError(f"Video dimensions were unavailable: {source_path}")
 
     total_frames = int(capture.get(cv.CAP_PROP_FRAME_COUNT) or 0)
-    writer, _ = create_video_writer(cv, source_path, output_dir, fps, (width, height))
+    writer, _ = create_video_writer(cv, source_path, output_dir, fps, (width, height), output_name)
 
     detection_count = 0
     result_count = 0
@@ -389,7 +397,7 @@ def run_video(model, source_path, output_dir, confidence, device, enable_tracker
     }
 
 
-def run_directory(model, source_path, output_dir, confidence, device, enable_tracker=False, tracker_config="botsort.yaml", stream_json=False):
+def run_directory(model, source_path, output_dir, confidence, device, enable_tracker=False, tracker_config="botsort.yaml", stream_json=False, output_name=""):
     import cv2 as cv
 
     images = [
@@ -405,8 +413,12 @@ def run_directory(model, source_path, output_dir, confidence, device, enable_tra
         results = run_model_once(model, str(image_path), confidence, device, enable_tracker, tracker_config)
         result = results[0]
         annotated = result.plot(font_size=5, line_width=1)
-        rel = image_path.relative_to(source_path)
-        out_path = output_dir / rel
+        if output_name:
+            extension = image_path.suffix.lower() if image_path.suffix.lower() in IMAGE_EXTENSIONS else ".jpg"
+            out_path = output_dir / f"{sanitize_output_name(output_name, source_path.stem)}-{index + 1:06d}{extension}"
+        else:
+            rel = image_path.relative_to(source_path)
+            out_path = output_dir / rel
         out_path.parent.mkdir(parents=True, exist_ok=True)
         cv.imwrite(str(out_path), annotated)
 
@@ -433,14 +445,14 @@ def run_directory(model, source_path, output_dir, confidence, device, enable_tra
     }
 
 
-def run_inference(model, source_path, output_dir, confidence, device, enable_tracker=False, tracker_config="botsort.yaml", stream_json=False):
+def run_inference(model, source_path, output_dir, confidence, device, enable_tracker=False, tracker_config="botsort.yaml", stream_json=False, output_name=""):
     if source_path.is_dir():
-        return run_directory(model, source_path, output_dir, confidence, device, enable_tracker, tracker_config, stream_json)
+        return run_directory(model, source_path, output_dir, confidence, device, enable_tracker, tracker_config, stream_json, output_name)
 
     if source_path.suffix.lower() in VIDEO_EXTENSIONS:
-        return run_video(model, source_path, output_dir, confidence, device, enable_tracker, tracker_config, stream_json)
+        return run_video(model, source_path, output_dir, confidence, device, enable_tracker, tracker_config, stream_json, output_name)
 
-    return run_image(model, source_path, output_dir, confidence, device, enable_tracker, tracker_config, stream_json)
+    return run_image(model, source_path, output_dir, confidence, device, enable_tracker, tracker_config, stream_json, output_name)
 
 
 def main():
@@ -470,6 +482,7 @@ def main():
         enable_tracker=args.enable_tracker,
         tracker_config=args.tracker,
         stream_json=args.stream_json,
+        output_name=args.output_name,
     )
 
     payload = {

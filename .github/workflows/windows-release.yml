@@ -1,0 +1,72 @@
+name: Build Windows release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 120
+
+    defaults:
+      run:
+        working-directory: Main
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: Main/package-lock.json
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          architecture: x64
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Build bundled Python runtime
+        shell: powershell
+        run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/build-python-runtime.ps1
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build CUDA installer and portable archive
+        run: npm run dist
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pink-ward-windows-x64
+          path: |
+            Main/dist/*.7z
+            Main/dist/*.zip
+            Main/dist/SHA256SUMS.txt
+            Main/dist/release-manifest.json
+          if-no-files-found: error
+          compression-level: 0
+
+      - name: Publish tagged release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            Main/dist/*.7z
+            Main/dist/*.zip
+            Main/dist/SHA256SUMS.txt
+            Main/dist/release-manifest.json
+          generate_release_notes: true

@@ -1,0 +1,4 @@
+# Installed after CUDA 12.6 torch and torchvision by scripts/build-python-runtime.ps1.
+# Keep these versions aligned with the defaults in that script.
+ultralytics==8.4.53
+lap==0.5.13

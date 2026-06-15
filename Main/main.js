@@ -5,6 +5,12 @@ const os = require('node:os');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { promisify } = require('node:util');
+const {
+  ensureProjectFilesStored,
+  importProjectFiles,
+  isPathInsideRoot,
+  migrateProjectStorageRoot
+} = require('./file-storage');
 
 let mainWindow;
 const storeFileName = 'pink-ward-projects.json';
@@ -50,6 +56,21 @@ function getBundledPythonPath() {
   }
 
   return path.join(__dirname, 'runtime', 'python', 'python.exe');
+}
+
+async function resolveBundledModelPath(modelReference) {
+  const requestedModel = String(modelReference || '').trim();
+
+  if (!requestedModel || path.isAbsolute(requestedModel)) {
+    return requestedModel;
+  }
+
+  const modelName = path.basename(requestedModel);
+  const bundledPath = app.isPackaged
+    ? path.join(process.resourcesPath, 'models', modelName)
+    : path.join(__dirname, modelName);
+
+  return await pathExists(bundledPath) ? bundledPath : requestedModel;
 }
 
 function getProcessWorkingDirectory() {
@@ -456,6 +477,7 @@ async function runPythonInference(payload) {
   const modelPath = String(payload?.modelPath || '').trim();
   const sourcePath = String(payload?.sourcePath || '').trim();
   const runName = sanitizeFileName(payload?.runName);
+  const outputName = sanitizeFileName(payload?.outputName || payload?.runName);
   const confidence = Number.isFinite(Number(payload?.confidence)) ? Number(payload.confidence) : 0.25;
   const shouldDisplay = Boolean(payload?.display);
   const enableTracker = payload?.enableTracker === true;
@@ -482,6 +504,8 @@ async function runPythonInference(payload) {
     sourcePath,
     '--output-dir',
     outputDir,
+    '--output-name',
+    outputName,
     '--conf',
     String(confidence)
   ];
@@ -528,6 +552,7 @@ function sendTrainingProgress(webContents, payload) {
 async function runPythonTraining(payload, webContents) {
   const runId = String(payload?.runId || `training-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`).trim();
   const requestedModel = String(payload?.model || '').trim();
+  const resolvedModel = await resolveBundledModelPath(requestedModel);
   const requestedModelName = String(payload?.modelName || '').trim();
   const runName = sanitizeFileName(payload?.runName || requestedModelName || 'training-run');
   const files = Array.isArray(payload?.files) ? payload.files : [];
@@ -568,7 +593,7 @@ async function runPythonTraining(payload, webContents) {
 
   const trainingPayload = {
     runId,
-    model: requestedModel,
+    model: resolvedModel,
     modelName: requestedModelName,
     runName,
     datasetRoot,
@@ -794,7 +819,9 @@ async function extractVideoFrames(payload) {
     '--output-dir',
     outputDir,
     '--interval-seconds',
-    String(intervalSeconds)
+    String(intervalSeconds),
+    '--name-base',
+    sourceName
   ];
 
   if (modelPath) {
@@ -924,7 +951,7 @@ async function extractVideoFrames(payload) {
     outputDir,
     folderName: path.basename(outputDir),
     sourcePath,
-    sourceName: path.basename(sourcePath),
+    sourceName,
     intervalSeconds,
     frameCount: frameFiles.length,
     labelCount: labelFiles.length,
@@ -939,6 +966,7 @@ function runStreamingPythonInference(payload, webContents) {
     const modelPath = String(payload?.modelPath || '').trim();
     const sourcePath = String(payload?.sourcePath || '').trim();
     const runName = sanitizeFileName(payload?.runName);
+    const outputName = sanitizeFileName(payload?.outputName || payload?.runName);
     const confidence = Number.isFinite(Number(payload?.confidence)) ? Number(payload.confidence) : 0.25;
     const enableTracker = payload?.enableTracker === true;
     const runId = String(payload?.runId || '');
@@ -972,6 +1000,8 @@ function runStreamingPythonInference(payload, webContents) {
       sourcePath,
       '--output-dir',
       outputDir,
+      '--output-name',
+      outputName,
       '--conf',
       String(confidence),
       '--display',
@@ -1176,6 +1206,47 @@ function normalizeRuntimeProjectState(project) {
   });
 
   return changed;
+}
+
+function rewritePathsInsideRoot(value, oldRoot, newRoot) {
+  if (Array.isArray(value)) {
+    value.forEach((entry, index) => {
+      value[index] = rewritePathsInsideRoot(entry, oldRoot, newRoot);
+    });
+    return value;
+  }
+
+  if (value && typeof value === 'object') {
+    Object.keys(value).forEach((key) => {
+      value[key] = rewritePathsInsideRoot(value[key], oldRoot, newRoot);
+    });
+    return value;
+  }
+
+  if (typeof value !== 'string' || !isPathInsideRoot(oldRoot, value)) {
+    return value;
+  }
+
+  return path.join(newRoot, path.relative(oldRoot, value));
+}
+
+async function migrateProjectStorageDirectory(project) {
+  if (!project?.id || !project?.name) {
+    return false;
+  }
+
+  const migration = await migrateProjectStorageRoot(
+    app.getPath('userData'),
+    project.id,
+    project.name
+  );
+
+  if (!migration.migrated) {
+    return false;
+  }
+
+  rewritePathsInsideRoot(project, migration.legacyRoot, migration.projectRoot);
+  return true;
 }
 
 function getPreviewMimeType(filePath) {
@@ -1483,7 +1554,12 @@ ipcMain.handle('window:action', (event, action) => {
 
 ipcMain.handle('projects:list', async () => {
   const store = await readProjectStore();
-  const changed = store.projects.some(normalizeRuntimeProjectState);
+  let changed = false;
+
+  for (const project of store.projects) {
+    changed = normalizeRuntimeProjectState(project) || changed;
+    changed = await migrateProjectStorageDirectory(project) || changed;
+  }
 
   if (changed) {
     await writeProjectStore(store);
@@ -1500,6 +1576,10 @@ ipcMain.handle('projects:create', async (_event, input) => {
   }
 
   const store = await readProjectStore();
+  if (store.projects.some((candidate) => String(candidate.name || '').trim().toLowerCase() === project.name.toLowerCase())) {
+    throw new Error('A project with this name already exists.');
+  }
+
   store.projects.unshift(project);
   store.activeProjectId = project.id;
   await writeProjectStore(store);
@@ -1550,6 +1630,80 @@ ipcMain.handle('projects:delete', async (_event, projectId) => {
   return store;
 });
 
+ipcMain.handle('files:import-into-project', async (_event, payload) => {
+  const projectId = String(payload?.projectId || '').trim();
+  const mode = String(payload?.mode || '').trim().toLowerCase();
+  const files = Array.isArray(payload?.files) ? payload.files : [];
+
+  if (!projectId) {
+    throw new Error('Project id is required for file import.');
+  }
+
+  if (!files.length) {
+    throw new Error('Choose at least one file to import.');
+  }
+
+  if (mode !== 'copy' && mode !== 'move') {
+    throw new Error('Choose whether to copy or move the selected files.');
+  }
+
+  const store = await readProjectStore();
+  const project = store.projects.find((candidate) => candidate.id === projectId);
+
+  if (!project) {
+    throw new Error('Project was not found.');
+  }
+
+  const migrated = await migrateProjectStorageDirectory(project);
+  if (migrated) {
+    await writeProjectStore(store);
+  }
+
+  const result = await importProjectFiles({
+    userDataPath: app.getPath('userData'),
+    projectId,
+    projectName: project.name,
+    category: payload?.category,
+    importName: payload?.importName,
+    mode,
+    files
+  });
+
+  return {
+    canceled: false,
+    ...result
+  };
+});
+
+ipcMain.handle('files:ensure-project-storage', async (_event, payload) => {
+  const projectId = String(payload?.projectId || '').trim();
+  const files = Array.isArray(payload?.files) ? payload.files : [];
+
+  if (!projectId) {
+    throw new Error('Project id is required.');
+  }
+
+  const store = await readProjectStore();
+  const project = store.projects.find((candidate) => candidate.id === projectId);
+  if (!project) {
+    throw new Error('Project was not found.');
+  }
+
+  const migrated = await migrateProjectStorageDirectory(project);
+  if (migrated) {
+    await writeProjectStore(store);
+  }
+
+  return ensureProjectFilesStored({
+    userDataPath: app.getPath('userData'),
+    projectId,
+    projectName: project.name,
+    category: payload?.category,
+    importName: payload?.importName,
+    files
+  });
+});
+
 ipcMain.handle('files:preview', async (_event, filePath) => {
   if (!filePath || typeof filePath !== 'string') {
     throw new Error('File path is required.');
@@ -1586,8 +1740,38 @@ ipcMain.handle('files:reveal', async (_event, filePath) => {
 
   filePath = await resolveExistingFilePath(filePath);
   const resolvedPath = path.resolve(filePath);
+
+  if (!isPathInsideRoot(app.getPath('userData'), resolvedPath)) {
+    throw new Error('Pink Ward can only open files stored inside Pink Ward.');
+  }
+
   await fs.access(resolvedPath);
   shell.showItemInFolder(resolvedPath);
+  return true;
+});
+
+ipcMain.handle('files:reveal-directory', async (_event, directoryPath) => {
+  if (!directoryPath || typeof directoryPath !== 'string') {
+    throw new Error('Directory path is required.');
+  }
+
+  directoryPath = await resolveExistingFilePath(directoryPath);
+  const resolvedPath = path.resolve(directoryPath);
+
+  if (!isPathInsideRoot(app.getPath('userData'), resolvedPath)) {
+    throw new Error('Pink Ward can only open folders stored inside Pink Ward.');
+  }
+
+  const stat = await fs.stat(resolvedPath);
+  if (!stat.isDirectory()) {
+    throw new Error('The stored batch folder could not be found.');
+  }
+
+  const errorMessage = await shell.openPath(resolvedPath);
+  if (errorMessage) {
+    throw new Error(errorMessage);
+  }
+
   return true;
 });
 

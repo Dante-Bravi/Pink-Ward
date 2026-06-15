@@ -9,42 +9,10 @@
   "scripts": {
     "prestart": "node build-tools/apply-dev-icon.js",
     "start": "electron .",
-    "dist": "electron-builder --win dir --x64 && node build-tools/apply-windows-icon.js"
-  },
-  "build": {
-    "appId": "local.pinkward.workspace",
-    "productName": "Pink Ward",
-    "directories": {
-      "output": "dist"
-    },
-    "files": [
-      "index.html",
-      "main.js",
-      "preload.js",
-      "inference/**/*",
-      "scripts/**/*",
-      "assets/**/*"
-    ],
-    "asarUnpack": [
-      "inference/**/*",
-      "scripts/**/*"
-    ],
-    "extraResources": [
-      {
-        "from": "runtime/python",
-        "to": "runtime/python",
-        "filter": [
-          "**/*"
-        ]
-      }
-    ],
-    "win": {
-      "icon": "assets/pink-ward-icon.ico",
-      "signAndEditExecutable": false,
-      "target": [
-        "dir"
-      ]
-    }
+    "test": "node --test tests/*.test.js",
+    "runtime:build": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/build-python-runtime.ps1",
+    "dist": "node scripts/build-windows.js",
+    "dist:dir": "node scripts/build-windows.js --dir"
   },
   "devDependencies": {
     "electron": "^31.7.7",

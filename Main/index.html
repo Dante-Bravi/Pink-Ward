@@ -3487,6 +3487,126 @@
       padding: 0 12px;
     }
 
+    .file-storage-choice-overlay {
+      z-index: 80;
+      background: rgba(31, 37, 34, 0.48);
+      backdrop-filter: blur(3px);
+    }
+
+    .file-storage-choice-dialog {
+      width: min(100%, 620px);
+      padding: 24px;
+    }
+
+    .file-storage-choice-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .file-storage-choice-icon {
+      display: grid;
+      flex: 0 0 44px;
+      width: 44px;
+      height: 44px;
+      place-items: center;
+      border-radius: 14px;
+      color: var(--accent);
+      background: rgba(201, 57, 123, 0.1);
+      border: 1px solid rgba(201, 57, 123, 0.2);
+    }
+
+    .file-storage-choice-icon svg {
+      width: 23px;
+      height: 23px;
+    }
+
+    .file-storage-choice-header h3 {
+      margin: 1px 0 5px;
+    }
+
+    .file-storage-choice-header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .file-storage-choice-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .file-storage-choice {
+      display: grid;
+      grid-template-columns: 38px minmax(0, 1fr);
+      gap: 12px;
+      align-items: start;
+      min-height: 112px;
+      padding: 16px;
+      text-align: left;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: #f8fbfa;
+      cursor: pointer;
+      transition: border-color 0.16s ease, background 0.16s ease, transform 0.12s ease, box-shadow 0.16s ease;
+    }
+
+    .file-storage-choice:hover,
+    .file-storage-choice:focus-visible {
+      border-color: var(--accent);
+      background: rgba(201, 57, 123, 0.055);
+      box-shadow: 0 10px 24px rgba(31, 37, 34, 0.08);
+      transform: translateY(-1px);
+      outline: none;
+    }
+
+    .file-storage-choice-symbol {
+      display: grid;
+      width: 38px;
+      height: 38px;
+      place-items: center;
+      border-radius: 11px;
+      color: var(--accent);
+      background: rgba(201, 57, 123, 0.1);
+    }
+
+    .file-storage-choice-symbol svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .file-storage-choice-copy {
+      display: grid;
+      gap: 4px;
+    }
+
+    .file-storage-choice-copy strong {
+      font-size: 15px;
+      font-weight: 820;
+    }
+
+    .file-storage-choice-copy span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .file-storage-choice-footer {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 18px;
+    }
+
+    @media (max-width: 640px) {
+      .file-storage-choice-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
     .model-results-metric-field {
       margin-top: 12px;
       padding-top: 12px;
@@ -5547,9 +5667,9 @@
                 <div class="field">
                   <label for="trainingSize">Size</label>
                   <select id="trainingSize">
-                    <option value="n">Nano (n)</option>
+                    <option value="n" selected>Nano (n)</option>
                     <option value="s">Small (s)</option>
-                    <option value="m" selected>Medium (m)</option>
+                    <option value="m">Medium (m)</option>
                   </select>
                 </div>
                 <div class="field training-base-weights">
@@ -5780,6 +5900,52 @@
       <div class="import-actions">
         <button id="cancelProjectDeleteButton" class="secondary-button" type="button">Cancel</button>
         <button id="confirmProjectDeleteButton" class="primary-button" type="button" disabled>Delete Project</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="fileStorageChoiceOverlay" class="import-overlay file-storage-choice-overlay" aria-hidden="true">
+    <div class="import-dialog file-storage-choice-dialog" role="dialog" aria-modal="true" aria-labelledby="fileStorageChoiceTitle">
+      <div class="file-storage-choice-header">
+        <div class="file-storage-choice-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H10l2 2h6.5A2.5 2.5 0 0 1 21 9.5v7A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5z"></path>
+          </svg>
+        </div>
+        <div>
+          <h3 id="fileStorageChoiceTitle">Store files in Pink Ward</h3>
+          <p id="fileStorageChoiceMessage">Choose how Pink Ward should store these files.</p>
+        </div>
+      </div>
+      <div class="file-storage-choice-grid">
+        <button id="copyFilesIntoPinkWardButton" class="file-storage-choice" type="button">
+          <span class="file-storage-choice-symbol" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="8" y="8" width="11" height="11" rx="2"></rect>
+              <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path>
+            </svg>
+          </span>
+          <span class="file-storage-choice-copy">
+            <strong>Copy into Pink Ward</strong>
+            <span>Keep the originals where they are and create an internal Pink Ward copy.</span>
+          </span>
+        </button>
+        <button id="moveFilesIntoPinkWardButton" class="file-storage-choice" type="button">
+          <span class="file-storage-choice-symbol" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14"></path>
+              <path d="m14 7 5 5-5 5"></path>
+              <path d="M5 5v14"></path>
+            </svg>
+          </span>
+          <span class="file-storage-choice-copy">
+            <strong>Move into Pink Ward</strong>
+            <span>Store the files internally and remove them from their original location.</span>
+          </span>
+        </button>
+      </div>
+      <div class="file-storage-choice-footer">
+        <button id="cancelFileStorageChoiceButton" class="secondary-button" type="button">Cancel</button>
       </div>
     </div>
   </div>
@@ -6401,6 +6567,11 @@
     const projectDeleteNameInput = document.getElementById("projectDeleteNameInput");
     const cancelProjectDeleteButton = document.getElementById("cancelProjectDeleteButton");
     const confirmProjectDeleteButton = document.getElementById("confirmProjectDeleteButton");
+    const fileStorageChoiceOverlay = document.getElementById("fileStorageChoiceOverlay");
+    const fileStorageChoiceMessage = document.getElementById("fileStorageChoiceMessage");
+    const copyFilesIntoPinkWardButton = document.getElementById("copyFilesIntoPinkWardButton");
+    const moveFilesIntoPinkWardButton = document.getElementById("moveFilesIntoPinkWardButton");
+    const cancelFileStorageChoiceButton = document.getElementById("cancelFileStorageChoiceButton");
     const trainingType = document.getElementById("trainingType");
     const trainingArchitecture = document.getElementById("trainingArchitecture");
     const trainingVersion = document.getElementById("trainingVersion");
@@ -6449,6 +6620,7 @@
     let resolveTrashConfirm = null;
     const trashConfirmDefaultButtonLabel = confirmTrashConfirmButton.textContent;
     let resolveProjectDeleteConfirm = null;
+    let resolveFileStorageChoice = null;
     let requiredProjectDeleteName = "";
     let pendingTitleMediaProjectId = "";
     let pendingModelResultsAttachModelId = "";
@@ -6572,22 +6744,23 @@
         return;
       }
 
-      const absolutePath = String(projectApi.getFilePath?.(file) || "").trim();
-      if (!absolutePath) {
+      const project = getActiveProject();
+      if (!project) {
         trainingBaseWeightsInput.value = "";
-        updateTrainingBaseWeightsState("The selected weights file does not have an accessible path.", true);
+        updateTrainingBaseWeightsState("Open a project before importing starting weights.", true);
         return;
       }
 
-      await saveTrainingBaseWeightsRecord({
-        name: file.name || "model.pt",
-        size: Number(file.size || 0),
-        type: file.type || "application/octet-stream",
-        relativePath: getFileRelativePath(file),
-        absolutePath,
-        lastModified: Number(file.lastModified || Date.now()),
-        importedAt: new Date().toISOString()
+      const importResult = await storeFilesInProject(project, [file], {
+        category: "training-weights",
+        importName: file.name || "starting-weights"
       });
+      if (!importResult || !importResult.files[0]) {
+        trainingBaseWeightsInput.value = "";
+        return;
+      }
+
+      await saveTrainingBaseWeightsRecord(importResult.files[0]);
       trainingBaseWeightsInput.value = "";
     }
 
@@ -6660,6 +6833,15 @@
             return store;
           },
           getFilePath: () => "",
+          importFiles: async () => {
+            throw new Error("Internal file storage is only available in the desktop app.");
+          },
+          ensureStoredFiles: async () => {
+            throw new Error("Internal file storage is only available in the desktop app.");
+          },
+          revealDirectory: async () => {
+            throw new Error("Internal file storage is only available in the desktop app.");
+          },
           previewFile: async () => {
             throw new Error("Preview is only available in the desktop app.");
           },
@@ -6678,6 +6860,134 @@
             throw new Error("Inference is only available in the desktop app.");
           }
         };
+
+    function createProjectImportDescriptor(file) {
+      return {
+        name: String(file?.name || "file"),
+        size: Number(file?.size || 0),
+        type: String(file?.type || "application/octet-stream"),
+        relativePath: getFileRelativePath(file),
+        sourcePath: String(projectApi.getFilePath?.(file) || file?.absolutePath || "").trim(),
+        lastModified: Number(file?.lastModified || 0)
+      };
+    }
+
+    function closeFileStorageChoice(mode = null) {
+      fileStorageChoiceOverlay.classList.remove("open");
+      fileStorageChoiceOverlay.setAttribute("aria-hidden", "true");
+
+      if (resolveFileStorageChoice) {
+        resolveFileStorageChoice(mode);
+        resolveFileStorageChoice = null;
+      }
+    }
+
+    function chooseFileStorageMode(project, fileCount) {
+      if (resolveFileStorageChoice) {
+        closeFileStorageChoice(null);
+      }
+
+      const count = Math.max(1, Number(fileCount || 0));
+      const fileLabel = count === 1 ? "this file" : `these ${count.toLocaleString()} files`;
+      const projectName = String(project?.name || "this project");
+      fileStorageChoiceMessage.textContent =
+        `Choose how Pink Ward should store ${fileLabel} for "${projectName}".`;
+
+      return new Promise((resolve) => {
+        resolveFileStorageChoice = resolve;
+        fileStorageChoiceOverlay.classList.add("open");
+        fileStorageChoiceOverlay.setAttribute("aria-hidden", "false");
+        copyFilesIntoPinkWardButton.focus();
+      });
+    }
+
+    async function storeFilesInProject(project, files, options = {}) {
+      if (!project?.id) {
+        throw new Error("Open a project before importing files.");
+      }
+
+      if (!projectApi.importFiles) {
+        throw new Error("Internal file storage is unavailable in this environment.");
+      }
+
+      const descriptors = Array.from(files || []).map(createProjectImportDescriptor);
+      const inaccessibleFile = descriptors.find((file) => !file.sourcePath);
+      if (inaccessibleFile) {
+        throw new Error(`The selected file "${inaccessibleFile.name}" does not have an accessible path.`);
+      }
+
+      const mode = await chooseFileStorageMode(project, descriptors.length);
+      if (!mode) {
+        return null;
+      }
+
+      const result = await projectApi.importFiles({
+        projectId: project.id,
+        category: String(options.category || "imports"),
+        importName: String(options.importName || "import"),
+        mode,
+        files: descriptors
+      });
+
+      return result?.canceled ? null : result;
+    }
+
+    function createStoredFileDescriptor(file) {
+      return {
+        ...(file && typeof file === "object" ? file : {}),
+        name: String(file?.name || "file"),
+        size: Number(file?.size || 0),
+        type: String(file?.type || "application/octet-stream"),
+        relativePath: String(file?.relativePath || file?.name || "file"),
+        absolutePath: String(file?.absolutePath || "").trim(),
+        lastModified: Number(file?.lastModified || 0),
+        importedAt: file?.importedAt || "",
+        storageMode: file?.storageMode || ""
+      };
+    }
+
+    async function ensureFilesStoredForLocation(project, files, options = {}) {
+      if (!project?.id) {
+        throw new Error("Open a project before locating files.");
+      }
+
+      if (!projectApi.ensureStoredFiles) {
+        throw new Error("Internal file storage is unavailable in this environment.");
+      }
+
+      const descriptors = Array.from(files || []).map(createStoredFileDescriptor);
+      const missingPath = descriptors.find((file) => !file.absolutePath);
+      if (missingPath) {
+        throw new Error(`The file "${missingPath.name}" does not have an accessible path.`);
+      }
+
+      return projectApi.ensureStoredFiles({
+        projectId: project.id,
+        category: String(options.category || "legacy-files"),
+        importName: String(options.importName || "legacy-import"),
+        files: descriptors
+      });
+    }
+
+    async function revealStoredPath(filePath) {
+      const storedPath = String(filePath || "").trim();
+      if (!storedPath || !projectApi.revealFile) {
+        return false;
+      }
+
+      await projectApi.revealFile(storedPath);
+      return true;
+    }
+
+    async function revealStoredDirectory(directoryPath) {
+      const storedPath = String(directoryPath || "").trim();
+      if (!storedPath || !projectApi.revealDirectory) {
+        return false;
+      }
+
+      await projectApi.revealDirectory(storedPath);
+      return true;
+    }
 
     document.querySelectorAll("[data-window-action]").forEach((button) => {
       button.addEventListener("click", () => {
@@ -6951,31 +7261,46 @@
         return;
       }
 
-      const files = quickInferenceFiles.map((file) => ({
-        name: file.name,
-        size: file.size,
-        type: file.type || "application/octet-stream",
-        relativePath: getFileRelativePath(file),
-        absolutePath: projectApi.getFilePath?.(file) || "",
-        lastModified: file.lastModified
-      }));
-      const runnableFiles = files.filter((file) => isSupportedInferenceFile(file) && file.absolutePath);
-
-      if (!runnableFiles.length) {
-        quickInferenceMessage.textContent = "Selected files are missing accessible paths.";
-        quickInferenceMessage.classList.add("error");
-        return;
-      }
-
       confirmProjectInferenceButton.disabled = true;
       quickInferenceMessage.classList.remove("error");
-      quickInferenceMessage.textContent = `Starting inference with ${model.name}...`;
+      quickInferenceMessage.textContent = "Choose whether Pink Ward should copy or move the selected files...";
 
       const folderNames = getTopLevelImportNames(quickInferenceFiles);
       const isSingleMediaFile = isStandaloneMediaImport(quickInferenceFiles);
       const folderName = quickInferenceSourceType === "folder"
         ? folderNames.length > 1 ? `${folderNames.length} folders` : folderNames[0] || "Selected folder"
         : isSingleMediaFile ? quickInferenceFiles[0].name || "Selected file" : "Selected files";
+      let importResult;
+
+      try {
+        importResult = await storeFilesInProject(project, quickInferenceFiles, {
+          category: "inference-sources",
+          importName: requestedName
+        });
+      } catch (error) {
+        quickInferenceMessage.textContent = error.message || "The inference files could not be imported.";
+        quickInferenceMessage.classList.add("error");
+        confirmProjectInferenceButton.disabled = false;
+        return;
+      }
+
+      if (!importResult) {
+        quickInferenceMessage.textContent = "Import canceled.";
+        confirmProjectInferenceButton.disabled = false;
+        return;
+      }
+
+      const files = importResult.files || [];
+      const runnableFiles = files.filter((file) => isSupportedInferenceFile(file) && file.absolutePath);
+
+      if (!runnableFiles.length) {
+        quickInferenceMessage.textContent = "Imported files are missing accessible internal paths.";
+        quickInferenceMessage.classList.add("error");
+        confirmProjectInferenceButton.disabled = false;
+        return;
+      }
+
+      quickInferenceMessage.textContent = `Starting inference with ${model.name}...`;
 
       const batch = {
         id: `batch-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -6983,10 +7308,10 @@
         sourceLabel: folderName,
         sourceType: quickInferenceSourceType,
         recordKind: isSingleMediaFile ? "file" : "batch",
-        fileCount: files.length,
+        fileCount: runnableFiles.length,
         thumbnail: null,
         thumbnailError: "",
-        files,
+        files: runnableFiles,
         createdAt: new Date().toISOString()
       };
 
@@ -8917,6 +9242,17 @@
       return path.endsWith(".txt");
     }
 
+    function isClassMetadataFile(file) {
+      const filePath = String(file?.name || file?.relativePath || "")
+        .replace(/\\/g, "/")
+        .toLowerCase();
+      const fileName = filePath.split("/").pop() || filePath;
+      return fileName === "classes.txt"
+        || /^classes[-_.].*\.txt$/.test(fileName)
+        || fileName === "obj.names"
+        || fileName === "labels.txt";
+    }
+
     function isImageFile(file) {
       const path = String(file.relativePath || file.name || "").toLowerCase();
       return /\.(apng|avif|bmp|gif|jpe?g|png|webp)$/i.test(path);
@@ -9088,16 +9424,19 @@
     function splitTrainingFiles(files = []) {
       const labels = [];
       const images = [];
+      const classes = [];
 
       files.forEach((file) => {
-        if (isLabelFile(file)) {
+        if (isClassMetadataFile(file)) {
+          classes.push(file);
+        } else if (isLabelFile(file)) {
           labels.push(file);
         } else {
           images.push(file);
         }
       });
 
-      return { images, labels };
+      return { images, labels, classes };
     }
 
     function getBaseNameWithoutExtension(file) {
@@ -9559,7 +9898,7 @@
       const unlabeledVideoBatches = getUnlabeledBatches(project, "unlabeled-videos");
       const unlabeledImageBatches = getUnlabeledBatches(project, "unlabeled-images");
       const visibleTrashCategories = categorizeTrashEntries(project?.trash || []);
-      const trashFiles = [
+      const trashItems = [
         ...(visibleTrashCategories.inference || []),
         ...(visibleTrashCategories.training || []),
         ...(visibleTrashCategories.extractedFromInference || []),
@@ -9573,8 +9912,8 @@
         extractedFromInferenceBytes: extractedFromInferenceBatches.reduce((total, batch) => total + sumFileSizes(batch.files || []), 0),
         unlabeledVideoBytes: unlabeledVideoBatches.reduce((total, batch) => total + sumFileSizes(batch.files || []), 0),
         unlabeledImageBytes: unlabeledImageBatches.reduce((total, batch) => total + sumFileSizes(batch.files || []), 0),
-        trashBytes: sumFileSizes(trashFiles),
-        trashCount: trashFiles.length
+        trashBytes: sumFileSizes(trashItems),
+        trashCount: trashItems.length
       };
     }
 
@@ -9605,17 +9944,40 @@
         unlabeledImages: []
       };
 
-      const pushFiles = (key, entry, files) => {
+      const pushEntry = (key, entry, files) => {
+        const entryType = String(entry.type || "");
+        const isBatch = entryType.toLowerCase().endsWith("-batch");
+
+        if (isBatch) {
+          groups[key].push({
+            name: entry.name || entry.batch?.name || "Recovered batch",
+            size: sumFileSizes(files),
+            fileCount: files.length,
+            deletedAt: entry.deletedAt || null,
+            itemKind: "batch",
+            files,
+            batch: entry.batch || null,
+            restoreCollection: entry.restoreCollection || "",
+            trashEntryId: entry.id || "",
+            trashEntryName: entry.name || "Recovered batch",
+            trashEntryType: entryType
+          });
+          return;
+        }
+
         files.forEach((file) => {
           groups[key].push({
             name: file.relativePath || file.name || entry.name || "Unknown file",
             size: Number(file.size) || 0,
+            fileCount: 1,
             deletedAt: entry.deletedAt || null,
+            itemKind: "file",
+            files: [file],
             absolutePath: file.absolutePath || "",
             type: file.type || "",
             trashEntryId: entry.id || "",
             trashEntryName: entry.name || "Recovered batch",
-            trashEntryType: entry.type || ""
+            trashEntryType: entryType
           });
         });
       };
@@ -9629,31 +9991,46 @@
         }
 
         if (type.startsWith("inference-frames")) {
-          pushFiles("extractedFromInference", entry, files);
+          pushEntry("extractedFromInference", entry, files);
           return;
         }
 
         if (type.startsWith("inference")) {
-          pushFiles("inference", entry, files);
+          pushEntry("inference", entry, files);
           return;
         }
 
         if (type.startsWith("unlabeled-videos")) {
-          pushFiles("unlabeledVideos", entry, files);
+          pushEntry("unlabeledVideos", entry, files);
           return;
         }
 
         if (type.startsWith("unlabeled-images")) {
-          pushFiles("unlabeledImages", entry, files);
+          pushEntry("unlabeledImages", entry, files);
           return;
         }
 
         if (type.startsWith("training")) {
-          pushFiles("training", entry, files);
+          pushEntry("training", entry, files);
         }
       });
 
       return groups;
+    }
+
+    function formatTrashCategoryCount(items) {
+      const batchCount = items.filter((item) => item.itemKind === "batch").length;
+      const fileCount = items.filter((item) => item.itemKind !== "batch").length;
+      const labels = [];
+
+      if (batchCount) {
+        labels.push(`${batchCount.toLocaleString()} ${batchCount === 1 ? "batch" : "batches"}`);
+      }
+      if (fileCount) {
+        labels.push(`${fileCount.toLocaleString()} ${fileCount === 1 ? "file" : "files"}`);
+      }
+
+      return labels.join(", ") || "0 items";
     }
 
     function renderTrashCategory(title, files) {
@@ -9662,23 +10039,23 @@
       const sortedFiles = [...files].sort((a, b) => new Date(b.deletedAt || 0) - new Date(a.deletedAt || 0));
       const rows = sortedFiles.length
         ? sortedFiles.map((file, index) => `
-            <div class="trash-file-row" data-trash-file-index="${index}" tabindex="0" aria-label="Preview deleted file ${escapeHtml(file.name)}">
+            <div class="trash-file-row" data-trash-file-index="${index}" tabindex="0" aria-label="Preview deleted ${file.itemKind === "batch" ? "batch" : "file"} ${escapeHtml(file.name)}">
               <strong>${escapeHtml(file.name)}</strong>
-              <span>${formatBytes(file.size)} - deleted ${formatDateTime(file.deletedAt)}</span>
+              <span>${file.itemKind === "batch" ? `${file.fileCount.toLocaleString()} files - ` : ""}${formatBytes(file.size)} - deleted ${formatDateTime(file.deletedAt)}</span>
             </div>
           `).join("")
-        : '<p class="trash-empty-note">No files in trash.</p>';
+        : '<p class="trash-empty-note">No items in trash.</p>';
 
       return `
         <section class="trash-category" aria-label="${escapeHtml(title)}" data-trash-category="${escapeHtml(categoryId)}">
           <div class="trash-category-actions">
-            <button class="trash-category-recover" type="button" data-trash-recover-category="${escapeHtml(categoryId)}" aria-label="Recover all ${escapeHtml(title)} trash files">Recover all</button>
-            <button class="trash-category-delete" type="button" data-trash-delete-category="${escapeHtml(categoryId)}" aria-label="Delete all ${escapeHtml(title)} trash files">
+            <button class="trash-category-recover" type="button" data-trash-recover-category="${escapeHtml(categoryId)}" aria-label="Recover all ${escapeHtml(title)} trash items">Recover all</button>
+            <button class="trash-category-delete" type="button" data-trash-delete-category="${escapeHtml(categoryId)}" aria-label="Delete all ${escapeHtml(title)} trash items">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>
             </button>
           </div>
           <h4>${escapeHtml(title)}</h4>
-          <p class="trash-category-meta">${files.length.toLocaleString()} files - ${formatBytes(totalBytes)}</p>
+          <p class="trash-category-meta">${formatTrashCategoryCount(files)} - ${formatBytes(totalBytes)}</p>
           <div class="trash-category-list">${rows}</div>
         </section>
       `;
@@ -9693,7 +10070,8 @@
         "unlabeled-videos": categories.unlabeledVideos,
         "unlabeled-images": categories.unlabeledImages
       };
-      return byCategoryId[categoryId] || [];
+      return [...(byCategoryId[categoryId] || [])]
+        .sort((a, b) => new Date(b.deletedAt || 0) - new Date(a.deletedAt || 0));
     }
 
     async function previewTrashFile(categoryId, fileIndex) {
@@ -9709,10 +10087,29 @@
       filePreviewOverlay.classList.remove("nested");
       filePreviewOverlay.setAttribute("aria-hidden", "false");
       setFilePreviewContextView("trash");
-      filePreviewTitle.textContent = file.name || "File Preview";
-      filePreviewMeta.textContent = `${formatBytes(file.size)}${file.type ? ` - ${file.type}` : ""}`;
+      filePreviewTitle.textContent = file.name || (file.itemKind === "batch" ? "Batch Preview" : "File Preview");
+      filePreviewMeta.textContent = file.itemKind === "batch"
+        ? `${file.fileCount.toLocaleString()} files - ${formatBytes(file.size)}`
+        : `${formatBytes(file.size)}${file.type ? ` - ${file.type}` : ""}`;
       filePreviewBody.innerHTML = '<p class="card-subtitle">Loading preview...</p>';
       resetFilePreviewActions();
+
+      if (file.itemKind === "batch") {
+        const shownFiles = (file.files || []).slice(0, 250);
+        const hiddenCount = Math.max((file.files || []).length - shownFiles.length, 0);
+        filePreviewBody.innerHTML = `
+          <div class="file-list">
+            ${shownFiles.map((batchFile) => `
+              <div class="file-row">
+                <span class="file-path">${escapeHtml(batchFile.relativePath || batchFile.name || "Unknown file")}</span>
+                <span class="file-size">${formatBytes(batchFile.size)}</span>
+              </div>
+            `).join("")}
+            ${hiddenCount ? `<div class="file-row"><span class="file-path">${hiddenCount.toLocaleString()} more files</span><span class="file-size"></span></div>` : ""}
+          </div>
+        `;
+        return;
+      }
 
       if (!file.absolutePath) {
         filePreviewBody.innerHTML = '<p class="card-subtitle">This trash file no longer has a local path for preview.</p>';
@@ -9748,6 +10145,12 @@
       const file = files[Number(fileIndex)];
 
       if (!file) {
+        return;
+      }
+
+      if (file.itemKind === "batch") {
+        project.trash = (project.trash || []).filter((entry) => entry.id !== file.trashEntryId);
+        await saveActiveProject(project);
         return;
       }
 
@@ -9824,27 +10227,22 @@
       };
     }
 
-    function createRecoveredTrainingBatch(entryName, files) {
-      const recoveredFiles = files.map((file) => ({
-        name: file.name || "Recovered file",
-        size: Number(file.size || 0),
-        type: file.type || "",
-        relativePath: file.name || "Recovered file",
-        absolutePath: file.absolutePath || "",
-        lastModified: Date.now()
-      }));
+    function createRecoveredTrashBatch(item) {
+      const originalBatch = item.batch && typeof item.batch === "object" ? item.batch : {};
+      const files = (item.files || []).map((file) => ({ ...file }));
 
       return {
-        id: `recovered-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        name: entryName || "Recovered training batch",
-        sourceLabel: "Recovered from trash",
-        sourceType: "trash-recovery",
-        recordKind: "batch",
-        fileCount: recoveredFiles.length,
-        thumbnail: null,
-        thumbnailError: "",
-        files: recoveredFiles,
-        createdAt: new Date().toISOString()
+        ...originalBatch,
+        id: originalBatch.id || `recovered-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        name: originalBatch.name || item.trashEntryName || item.name || "Recovered batch",
+        sourceLabel: originalBatch.sourceLabel || "Recovered from trash",
+        sourceType: originalBatch.sourceType || "trash-recovery",
+        recordKind: originalBatch.recordKind || "batch",
+        fileCount: files.length,
+        thumbnail: originalBatch.thumbnail || null,
+        thumbnailError: originalBatch.thumbnailError || "",
+        files,
+        createdAt: originalBatch.createdAt || new Date().toISOString()
       };
     }
 
@@ -9855,36 +10253,50 @@
         return;
       }
 
-      if (view === "training") {
-        const list = getProjectDataList(project, view);
-        const grouped = new Map();
-        files.forEach((file) => {
-          const key = file.trashEntryId || `entry-${file.name}`;
-          const current = grouped.get(key) || { name: file.trashEntryName || "Recovered training batch", files: [] };
-          current.files.push(file);
-          grouped.set(key, current);
-        });
-        Array.from(grouped.values()).forEach((entry) => {
-          list.unshift(createRecoveredTrainingBatch(entry.name, entry.files));
-        });
-        return;
-      }
+      files.forEach((file) => {
+        const recoveredBatch = file.itemKind === "batch"
+          ? createRecoveredTrashBatch(file)
+          : createRecoveredBatch(file, view);
 
-      if (view === "inference") {
-        const list = getProjectDataList(project, view);
-        files.forEach((file) => list.unshift(createRecoveredBatch(file, view)));
-        return;
-      }
+        if (view === "unlabeled-videos" || view === "unlabeled-images") {
+          const store = getUnlabeledStore(project, view);
+          const collection = file.itemKind === "batch" && file.restoreCollection === "fromInference"
+            ? "fromInference"
+            : "user";
+          store[collection] = store[collection] || [];
+          store[collection].unshift(recoveredBatch);
+          return;
+        }
 
-      if (view === "inference-frames") {
-        const list = getProjectDataList(project, view);
-        files.forEach((file) => list.unshift(createRecoveredBatch(file, view)));
-        return;
-      }
+        getProjectDataList(project, view).unshift(recoveredBatch);
+      });
+    }
 
-      const store = getUnlabeledStore(project, view);
-      store.user = store.user || [];
-      files.forEach((file) => store.user.unshift(createRecoveredBatch(file, view)));
+    function removeTrashItems(project, files) {
+      const batchEntryIds = new Set(
+        files
+          .filter((file) => file.itemKind === "batch")
+          .map((file) => file.trashEntryId)
+      );
+      const fileKeys = new Set(
+        files
+          .filter((file) => file.itemKind !== "batch")
+          .map((file) => `${file.trashEntryId}::${file.absolutePath || ""}::${file.name}`)
+      );
+
+      project.trash = (project.trash || [])
+        .filter((entry) => !batchEntryIds.has(entry.id))
+        .map((entry) => {
+          const keptFiles = (entry.files || []).filter((candidate) => {
+            const key = `${entry.id || ""}::${candidate.absolutePath || ""}::${candidate.relativePath || candidate.name || ""}`;
+            return !fileKeys.has(key);
+          });
+          return {
+            ...entry,
+            files: keptFiles
+          };
+        })
+        .filter((entry) => (entry.files || []).length > 0);
     }
 
     async function recoverTrashFile(categoryId, fileIndex) {
@@ -9901,33 +10313,8 @@
         return;
       }
 
-      const recoveryFiles = categoryId === "training"
-        ? files.filter((candidate) => candidate.trashEntryId === file.trashEntryId)
-        : [file];
-
-      recoverTrashFilesToProject(project, categoryId, recoveryFiles);
-
-      project.trash = (project.trash || [])
-        .map((entry) => {
-          if (categoryId !== "training" && entry.id !== file.trashEntryId) {
-            return entry;
-          }
-
-          const keptFiles = (entry.files || []).filter((candidate) => {
-            return !recoveryFiles.some((recovered) => {
-              const samePath = (candidate.absolutePath || "") === (recovered.absolutePath || "");
-              const sameName = (candidate.relativePath || candidate.name || "") === recovered.name;
-              return samePath && sameName;
-            });
-          });
-
-          return {
-            ...entry,
-            files: keptFiles
-          };
-        })
-        .filter((entry) => (entry.files || []).length > 0);
-
+      recoverTrashFilesToProject(project, categoryId, [file]);
+      removeTrashItems(project, [file]);
       await saveActiveProject(project);
     }
 
@@ -9944,27 +10331,14 @@
         return;
       }
 
-      const confirmed = await confirmDeleteTrashCategory(files.length);
+      const fileCount = files.reduce((total, file) => total + Number(file.fileCount || 1), 0);
+      const confirmed = await confirmDeleteTrashCategory(fileCount);
 
       if (!confirmed) {
         return;
       }
 
-      const fileKeys = new Set(files.map((file) => `${file.trashEntryId}::${file.absolutePath || ""}::${file.name}`));
-
-      project.trash = (project.trash || [])
-        .map((entry) => {
-          const keptFiles = (entry.files || []).filter((candidate) => {
-            const key = `${entry.id || ""}::${candidate.absolutePath || ""}::${candidate.relativePath || candidate.name || ""}`;
-            return !fileKeys.has(key);
-          });
-          return {
-            ...entry,
-            files: keptFiles
-          };
-        })
-        .filter((entry) => (entry.files || []).length > 0);
-
+      removeTrashItems(project, files);
       await saveActiveProject(project);
     }
 
@@ -10007,22 +10381,7 @@
       }
 
       recoverTrashFilesToProject(project, categoryId, files);
-
-      const fileKeys = new Set(files.map((file) => `${file.trashEntryId}::${file.absolutePath || ""}::${file.name}`));
-
-      project.trash = (project.trash || [])
-        .map((entry) => {
-          const keptFiles = (entry.files || []).filter((candidate) => {
-            const key = `${entry.id || ""}::${candidate.absolutePath || ""}::${candidate.relativePath || candidate.name || ""}`;
-            return !fileKeys.has(key);
-          });
-          return {
-            ...entry,
-            files: keptFiles
-          };
-        })
-        .filter((entry) => (entry.files || []).length > 0);
-
+      removeTrashItems(project, files);
       await saveActiveProject(project);
     }
 
@@ -10515,7 +10874,7 @@
       const splitFiles = splitTrainingFiles(batch.files || []);
       const missingLabels = isTrainingDataView(view) ? getMissingLabelImageIndexes(splitFiles.images, splitFiles.labels) : [];
       const fileSummary = view === "training"
-          ? `${splitFiles.images.length.toLocaleString()} images - ${splitFiles.labels.length.toLocaleString()} labels`
+          ? `${splitFiles.images.length.toLocaleString()} images - ${splitFiles.labels.length.toLocaleString()} labels${splitFiles.classes.length ? ` - ${splitFiles.classes.length.toLocaleString()} classes file${splitFiles.classes.length === 1 ? "" : "s"}` : ""}`
           : `${Number(batch.fileCount || 0).toLocaleString()} files`;
       const summaryWithModel = showModelContext
         ? `${fileSummary} - ${batch.sourceLabel} - Model: ${modelNameText}`
@@ -10874,7 +11233,7 @@
         name: batch.name,
         projectName: project.name,
         sourceBatchId: batch.id,
-        sourceName: target.fileName || batch.name,
+        sourceName: batch.name,
         sourcePath: target.filePath,
         fileCount: Number(batch.fileCount || batch.files?.length || 0),
         modelId: model.id,
@@ -11427,6 +11786,7 @@
               modelPath,
               sourcePath: sourceFile.absolutePath,
               runName: `${project.name}-${batch.name}-${index + 1}`,
+              outputName: `${batch.name}-${index + 1}`,
               confidence,
               enableTracker: trackerEnabled,
               display: true
@@ -11462,6 +11822,7 @@
             modelPath,
             sourcePath,
             runName: `${project.name}-${batch.name}`,
+            outputName: batch.name,
             confidence,
             enableTracker: trackerEnabled,
             display: true
@@ -11713,12 +12074,15 @@
       const missingLabels = view === "training" ? getMissingLabelImageIndexes(trainingFiles.images, trainingFiles.labels) : [];
       const missingLabelIndexes = new Set(missingLabels.map(({ index }) => index));
       const labelsStartIndex = trainingFiles.images.length;
-      activeDetailFiles = view === "training" ? [...trainingFiles.images, ...trainingFiles.labels] : files;
+      const classesStartIndex = labelsStartIndex + trainingFiles.labels.length;
+      activeDetailFiles = view === "training"
+        ? [...trainingFiles.images, ...trainingFiles.labels, ...trainingFiles.classes]
+        : files;
       activeDetailBatchId = batch.id;
       activeDetailView = view;
       activeDetailBatchName = batch.name || "Data files";
       const detailSummary = isTrainingDataView(view)
-        ? `${trainingFiles.images.length.toLocaleString()} images - ${trainingFiles.labels.length.toLocaleString()} labels`
+        ? `${trainingFiles.images.length.toLocaleString()} images - ${trainingFiles.labels.length.toLocaleString()} labels${trainingFiles.classes.length ? ` - ${trainingFiles.classes.length.toLocaleString()} classes file${trainingFiles.classes.length === 1 ? "" : "s"}` : ""}`
         : `${Number(batch.fileCount || files.length || 0).toLocaleString()} files`;
       const viewLabel = {
         training: "Training",
@@ -11747,6 +12111,12 @@
             <h4>Labels</h4>
             <div class="file-list">${renderFileRows(trainingFiles.labels, "more labels", labelsStartIndex, new Set(), "training-labels")}</div>
           </section>
+          ${trainingFiles.classes.length ? `
+            <section class="file-section">
+              <h4>Classes</h4>
+              <div class="file-list">${renderFileRows(trainingFiles.classes, "more class files", classesStartIndex, new Set(), "training-classes")}</div>
+            </section>
+          ` : ""}
         `
         : `<div class="file-list">${renderFileRows(files, "more files", 0, new Set(), `${view}-files`)}</div>`;
 
@@ -12229,17 +12599,6 @@
         return cleaned.join("/");
       };
 
-      const isMetadataLabelFile = (file) => {
-        if (!isLabelFile(file)) {
-          return false;
-        }
-        const name = String(file?.name || file?.relativePath || "").toLowerCase();
-        return name === "classes.txt"
-          || /^classes[-_.].*\.txt$/.test(name)
-          || name === "obj.names"
-          || name === "labels.txt";
-      };
-
       const imageBaseSet = new Set(
         fileItems
           .filter(({ file }) => isImageFile(file))
@@ -12248,7 +12607,7 @@
       );
       const labelBaseSet = new Set(
         fileItems
-          .filter(({ file }) => isLabelFile(file))
+          .filter(({ file }) => isLabelFile(file) && !isClassMetadataFile(file))
           .map(({ file }) => toPairBase(file))
           .filter(Boolean)
       );
@@ -12261,7 +12620,7 @@
           return !labelBaseSet.has(toPairBase(file));
         }
         if (isLabelFile(file)) {
-          if (isMetadataLabelFile(file)) {
+          if (isClassMetadataFile(file)) {
             return false;
           }
           return !imageBaseSet.has(toPairBase(file));
@@ -12278,6 +12637,7 @@
 
       const errorItems = [];
       const imageItems = [];
+      const classItems = [];
       const labelItems = [];
       const otherItems = [];
       for (const item of fileItems) {
@@ -12290,6 +12650,10 @@
           imageItems.push(item);
           continue;
         }
+        if (isClassMetadataFile(file)) {
+          classItems.push(item);
+          continue;
+        }
         if (isLabelFile(file)) {
           labelItems.push(item);
           continue;
@@ -12299,6 +12663,7 @@
       return {
         errorItems,
         imageItems,
+        classItems,
         labelItems,
         otherItems
       };
@@ -12365,6 +12730,7 @@
       const {
         errorItems,
         imageItems,
+        classItems,
         labelItems,
         otherItems
       } = classifyDataRecordFiles(files);
@@ -12377,7 +12743,8 @@
         { title: "Error", items: errorItems, isError: true },
         { title: "Images", items: imageItems, isError: false },
         { title: "Other Files", items: otherItems, isError: false },
-        { title: "Labels", items: labelItems, isError: false }
+        { title: "Labels", items: labelItems, isError: false },
+        { title: "Classes", items: classItems, isError: false }
       ].filter((category) => category.items.length);
       const totalCount = categories.reduce((sum, category) => sum + category.items.length, 0);
 
@@ -12925,6 +13292,8 @@
             const imageResult = await projectApi.runInference({
               modelPath: source.modelPath,
               sourcePath: imageFile.absolutePath,
+              runName: `${sourceDisplayName}-${index + 1}`,
+              outputName: `${sourceDisplayName}-${index + 1}`,
               confidence: 0.25,
               display: false
             });
@@ -12968,8 +13337,7 @@
 
         const project = source.project;
         ensureProjectData(project);
-        const sourceBaseName = sourceDisplayName.replace(/\.[^.]+$/, "");
-        const batchName = `Extracted frames from ${sourceBaseName}`;
+        const batchName = `Extracted frames from ${sourceDisplayName}`;
         const frameRecords = frameFiles.map((frame) => ({
           name: frame.name,
           size: Number(frame.size || 0),
@@ -13290,6 +13658,7 @@
     async function deleteBatch(batchId, view) {
       const project = getActiveProject();
       let batch = null;
+      let restoreCollection = "";
 
       if (view === "unlabeled-videos" || view === "unlabeled-images") {
         const store = getUnlabeledStore(project, view);
@@ -13297,11 +13666,13 @@
 
         if (fromInferenceIndex !== -1) {
           [batch] = store.fromInference.splice(fromInferenceIndex, 1);
+          restoreCollection = "fromInference";
         } else {
           const userIndex = (store.user || []).findIndex((candidate) => candidate.id === batchId);
 
           if (userIndex !== -1) {
             [batch] = store.user.splice(userIndex, 1);
+            restoreCollection = "user";
           }
         }
       } else {
@@ -13323,6 +13694,11 @@
         type: `${view}-batch`,
         name: batch.name,
         files: batch.files || [],
+        batch: {
+          ...batch,
+          files: batch.files || []
+        },
+        restoreCollection,
         deletedAt: new Date().toISOString()
       });
       closeDataRecordPopup();
@@ -13409,17 +13785,27 @@
     }
 
     async function openModelFileLocation(modelId) {
+      const project = getActiveProject();
       const model = findModelById(modelId);
-      const primaryFilePath = model?.files?.[0]?.absolutePath || "";
 
-      if (!primaryFilePath || !projectApi.revealFile) {
+      if (!project || !model?.files?.length) {
         return;
       }
 
       try {
-        await projectApi.revealFile(primaryFilePath);
-      } catch (_error) {
-        // Ignore failures when the file no longer exists on disk.
+        const result = await ensureFilesStoredForLocation(project, model.files, {
+          category: "legacy-models",
+          importName: model.name || model.weightsName || "model"
+        });
+        if (result?.migrated) {
+          model.files = result.files;
+          model.fileCount = result.files.length;
+          await saveActiveProject(project, { render: false });
+        }
+        await revealStoredPath(result?.files?.[0]?.absolutePath);
+      } catch (error) {
+        console.error("Could not open the stored model location.", error);
+        window.alert(error.message || "Could not open the stored model location.");
       }
     }
 
@@ -13447,19 +13833,21 @@
         resultsCsvError = error.message || "Could not parse results.csv";
       }
 
-      model.resultsCsv = {
-        name: csvFile.name,
-        size: Number(csvFile.size || 0),
-        type: csvFile.type || "text/csv",
-        relativePath: csvFile.name,
-        absolutePath: projectApi.getFilePath?.(csvFile) || "",
-        lastModified: Number(csvFile.lastModified || 0)
-      };
+      const importResult = await storeFilesInProject(project, [csvFile], {
+        category: "model-results",
+        importName: `${model.name || "model"}-results`
+      });
+      if (!importResult?.files?.[0]) {
+        return false;
+      }
+
+      model.resultsCsv = importResult.files[0];
       model.resultsMetricSource = selectedMetricSource;
       model.resultsMetrics = parsedResultsMetrics;
       model.resultsCsvError = resultsCsvError;
 
       await saveActiveProject(project);
+      return true;
     }
 
     function promptModelResultsCsvAttach(modelId) {
@@ -13485,8 +13873,13 @@
 
       confirmAttachResultsCsvButton.disabled = true;
       try {
-        await attachResultsCsvToModel(modelId, csvFile, metricSource);
-        closeResultsMetricSourceDialog();
+        const imported = await attachResultsCsvToModel(modelId, csvFile, metricSource);
+        if (imported) {
+          closeResultsMetricSourceDialog();
+        } else {
+          attachResultsCsvStatus.textContent = "Import canceled.";
+          confirmAttachResultsCsvButton.disabled = false;
+        }
       } catch (error) {
         console.error("Could not attach results.csv to model.", error);
         attachResultsCsvStatus.textContent = error.message || "Could not attach results.csv.";
@@ -13495,47 +13888,101 @@
     }
 
     async function openInferenceOutputLocation(batchId) {
+      const project = getActiveProject();
       const batch = findStoredInferenceOutput(batchId);
-      const primaryFilePath = batch?.files?.[0]?.absolutePath || "";
 
-      if (!primaryFilePath || !projectApi.revealFile) {
+      if (!project || !batch?.files?.length) {
         return;
       }
 
       try {
-        await projectApi.revealFile(primaryFilePath);
-      } catch (_error) {
-        // Ignore failures when the file no longer exists on disk.
+        const result = await ensureFilesStoredForLocation(project, batch.files, {
+          category: "legacy-inference",
+          importName: batch.name || "inference"
+        });
+        if (result?.migrated) {
+          batch.files = result.files;
+          batch.fileCount = result.files.length;
+          await saveActiveProject(project, { render: false });
+        }
+        if (result?.storageRoot) {
+          await revealStoredDirectory(result.storageRoot);
+        } else {
+          await revealStoredPath(result?.files?.[0]?.absolutePath);
+        }
+      } catch (error) {
+        console.error("Could not open the stored inference location.", error);
+        window.alert(error.message || "Could not open the stored inference location.");
       }
     }
 
     async function openDetailFileLocation(fileIndex) {
+      const project = getActiveProject();
+      const batch = findBatch(activeDetailBatchId, activeDetailView);
       const file = activeDetailFiles[Number(fileIndex)];
-      const filePath = file?.absolutePath || "";
 
-      if (!filePath || !projectApi.revealFile) {
+      if (!project || !batch || !file) {
         return;
       }
 
       try {
-        await projectApi.revealFile(filePath);
-      } catch (_error) {
-        // Ignore failures when the file no longer exists on disk.
+        const result = await ensureFilesStoredForLocation(project, [file], {
+          category: `legacy-${activeDetailView || "data"}`,
+          importName: batch.name || file.name || "file"
+        });
+        const storedFile = result?.files?.[0];
+        if (!storedFile) {
+          return;
+        }
+
+        if (result.migrated) {
+          const batchFileIndex = (batch.files || []).findIndex((candidate) => {
+            if (candidate === file) {
+              return true;
+            }
+            return String(candidate?.absolutePath || "") === String(file.absolutePath || "")
+              && String(candidate?.relativePath || candidate?.name || "") === String(file.relativePath || file.name || "");
+          });
+          if (batchFileIndex !== -1) {
+            batch.files[batchFileIndex] = storedFile;
+          }
+          activeDetailFiles[Number(fileIndex)] = storedFile;
+          await saveActiveProject(project, { render: false });
+        }
+
+        await revealStoredPath(storedFile.absolutePath);
+      } catch (error) {
+        console.error("Could not open the stored file location.", error);
+        window.alert(error.message || "Could not open the stored file location.");
       }
     }
 
     async function openBatchFileLocation(batchId, view) {
+      const project = getActiveProject();
       const batch = findBatch(batchId, view);
-      const primaryFilePath = (batch?.files || []).find((file) => file?.absolutePath)?.absolutePath || "";
 
-      if (!primaryFilePath || !projectApi.revealFile) {
+      if (!project || !batch?.files?.length) {
         return;
       }
 
       try {
-        await projectApi.revealFile(primaryFilePath);
-      } catch (_error) {
-        // Ignore failures when the file no longer exists on disk.
+        const result = await ensureFilesStoredForLocation(project, batch.files, {
+          category: `legacy-${view || "data"}`,
+          importName: batch.name || "batch"
+        });
+        if (result?.migrated) {
+          batch.files = result.files;
+          batch.fileCount = result.files.length;
+          await saveActiveProject(project, { render: false });
+        }
+        if (result?.storageRoot) {
+          await revealStoredDirectory(result.storageRoot);
+        } else {
+          await revealStoredPath(result?.files?.[0]?.absolutePath);
+        }
+      } catch (error) {
+        console.error("Could not open the stored batch location.", error);
+        window.alert(error.message || "Could not open the stored batch location.");
       }
     }
 
@@ -13910,7 +14357,7 @@
       if (storage.trashBytes > 0) {
         trashStorageState.innerHTML = `
           <div class="trash-empty-summary">
-            <h3>${storage.trashCount.toLocaleString()} files recoverable</h3>
+            <h3>${storage.trashCount.toLocaleString()} ${storage.trashCount === 1 ? "item" : "items"} recoverable</h3>
             <p>${formatBytes(storage.trashBytes)} currently in trash</p>
             <div class="trash-empty-card-actions">
               <button id="emptyTrashButton" class="secondary-button trash-empty-button" type="button">Empty All Trash</button>
@@ -14789,17 +15236,7 @@
       }
 
       try {
-        const dataUrl = await readFileAsDataUrl(file);
-        const absolutePath = projectApi.getFilePath?.(file) || "";
-        await updateProjectTitlePage(projectId, {
-          mode: "external",
-          external: {
-            name: String(file.name || "Cover photo"),
-            mediaType: "image",
-            absolutePath,
-            dataUrl
-          }
-        });
+        await applyProjectCoverFile(projectId, file);
       } catch (error) {
         console.error("Could not set external project title media.", error);
         window.alert(error.message || "Could not set external project title media.");
@@ -14816,14 +15253,27 @@
         return;
       }
 
+      const project = getProjectById(projectId);
+      if (!project) {
+        throw new Error("Project was not found.");
+      }
+
       const dataUrl = await readFileAsDataUrl(file);
-      const absolutePath = projectApi.getFilePath?.(file) || "";
+      const importResult = await storeFilesInProject(project, [file], {
+        category: "project-covers",
+        importName: file.name || "cover-photo"
+      });
+      if (!importResult?.files?.[0]) {
+        return;
+      }
+
+      const storedFile = importResult.files[0];
       await updateProjectTitlePage(projectId, {
         mode: "external",
         external: {
-          name: String(file.name || "Cover photo"),
+          name: String(storedFile.name || file.name || "Cover photo"),
           mediaType: "image",
-          absolutePath,
+          absolutePath: storedFile.absolutePath,
           dataUrl
         }
       });
@@ -16196,7 +16646,7 @@
       const files = Array.isArray(batch?.files) ? batch.files : [];
       const splitFiles = splitTrainingFiles(files);
       const fileCount = Number(batch?.fileCount || files.length || 0);
-      return `${fileCount.toLocaleString()} files - ${splitFiles.images.length.toLocaleString()} images - ${splitFiles.labels.length.toLocaleString()} labels`;
+      return `${fileCount.toLocaleString()} files - ${splitFiles.images.length.toLocaleString()} images - ${splitFiles.labels.length.toLocaleString()} labels${splitFiles.classes.length ? ` - ${splitFiles.classes.length.toLocaleString()} classes file${splitFiles.classes.length === 1 ? "" : "s"}` : ""}`;
     }
 
     function readSelectedTrainingBatchIdsFromDialog() {
@@ -17123,6 +17573,8 @@
         : isSingleMediaFile ? stagedImportFiles[0].name || "Selected file" : "Selected files";
       let thumbnail = null;
       let thumbnailError = "";
+      let parsedResultsMetrics = null;
+      let resultsCsvError = "";
 
       if (needsThumbnail) {
         try {
@@ -17133,41 +17585,69 @@
         }
       }
 
+      if (importTarget === "model" && stagedModelResultsCsvFile) {
+        try {
+          const csvText = await stagedModelResultsCsvFile.text();
+          parsedResultsMetrics = parseModelResultsCsvText(csvText, stagedModelResultsMetricSource);
+        } catch (error) {
+          resultsCsvError = error.message || "Could not parse results.csv";
+        }
+      }
+
+      const supplementalFiles = stagedModelResultsCsvFile ? [stagedModelResultsCsvFile] : [];
+      const filesToStore = [...stagedImportFiles, ...supplementalFiles];
+      const importCategory = importTarget === "model"
+        ? "models"
+        : importTarget === "inference"
+          ? "saved-inference"
+          : importTarget === "inference-source"
+            ? "inference-sources"
+            : importTarget === "unlabeled-videos"
+              ? "unlabeled-videos"
+              : importTarget === "unlabeled-images"
+                ? "unlabeled-images"
+                : "training-data";
+      selectedFileCount.textContent = "Choose whether Pink Ward should copy or move the selected files...";
+      let importResult;
+
+      try {
+        importResult = await storeFilesInProject(project, filesToStore, {
+          category: importCategory,
+          importName: requestedName
+        });
+      } catch (error) {
+        selectedFileCount.textContent = error.message || "The selected files could not be imported.";
+        confirmImportButton.disabled = false;
+        return;
+      }
+
+      if (!importResult) {
+        selectedFileCount.textContent = "Import canceled.";
+        confirmImportButton.disabled = false;
+        return;
+      }
+
+      const storedBatchFiles = (importResult.files || []).slice(0, stagedImportFiles.length);
+      const storedResultsCsv = stagedModelResultsCsvFile
+        ? importResult.files?.[stagedImportFiles.length] || null
+        : null;
       const batch = {
         id: `batch-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         name: requestedName,
         sourceLabel: folderName,
         sourceType: stagedImportSourceType,
+        storageMode: importResult.mode,
         inferenceConfidence: importTarget === "inference-source" ? getImportInferenceConfidenceValue() : undefined,
         recordKind: isSingleMediaFile ? "file" : "batch",
-        fileCount: stagedImportFiles.length,
+        fileCount: storedBatchFiles.length,
         thumbnail,
         thumbnailError,
-        files: stagedImportFiles.map((file) => ({
-          name: file.name,
-          size: file.size,
-          type: file.type || "application/octet-stream",
-          relativePath: getFileRelativePath(file),
-          absolutePath: projectApi.getFilePath?.(file) || "",
-          lastModified: file.lastModified
-        })),
+        files: storedBatchFiles,
         createdAt: new Date().toISOString()
       };
 
       if (importTarget === "model") {
         project.models = project.models || [];
-        let parsedResultsMetrics = null;
-        let resultsCsvError = "";
-
-        if (stagedModelResultsCsvFile) {
-          try {
-            const csvText = await stagedModelResultsCsvFile.text();
-            parsedResultsMetrics = parseModelResultsCsvText(csvText, "best");
-          } catch (error) {
-            resultsCsvError = error.message || "Could not parse results.csv";
-          }
-        }
-
         const createdModel = {
           id: `model-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
           name: requestedName,
@@ -17175,20 +17655,12 @@
           weightsName: stagedImportFiles[0]?.name || requestedName,
           sourceLabel: folderName,
           sourceType: stagedImportSourceType,
-          fileCount: stagedImportFiles.length,
+          storageMode: importResult.mode,
+          fileCount: storedBatchFiles.length,
           files: batch.files,
           createdAt: batch.createdAt,
-          resultsCsv: stagedModelResultsCsvFile
-            ? {
-                name: stagedModelResultsCsvFile.name,
-                size: Number(stagedModelResultsCsvFile.size || 0),
-                type: stagedModelResultsCsvFile.type || "text/csv",
-                relativePath: stagedModelResultsCsvFile.name,
-                absolutePath: projectApi.getFilePath?.(stagedModelResultsCsvFile) || "",
-                lastModified: Number(stagedModelResultsCsvFile.lastModified || 0)
-              }
-            : null,
-          resultsMetricSource: stagedModelResultsCsvFile ? "best" : "",
+          resultsCsv: storedResultsCsv,
+          resultsMetricSource: storedResultsCsv ? stagedModelResultsMetricSource : "",
           resultsMetrics: parsedResultsMetrics,
           resultsCsvError
         };
@@ -17307,6 +17779,7 @@
     importInferenceConfidence.addEventListener("input", syncImportInferenceConfidenceLabel);
 
     addBackdropCloseHandler(importOverlay, closeImportDialog);
+    addBackdropCloseHandler(fileStorageChoiceOverlay, () => closeFileStorageChoice(null));
     addBackdropCloseHandler(trainingDataOverlay, closeTrainingDataDialog);
     addBackdropCloseHandler(trainingHyperparamsOverlay, closeTrainingHyperparamsDialog);
     addBackdropCloseHandler(trainingCompleteOverlay, closeTrainingCompleteDialog);
@@ -17316,6 +17789,18 @@
     viewTrainingModelButton.addEventListener("click", () => {
       closeTrainingCompleteDialog();
       setProjectTab("models");
+    });
+
+    copyFilesIntoPinkWardButton.addEventListener("click", () => {
+      closeFileStorageChoice("copy");
+    });
+
+    moveFilesIntoPinkWardButton.addEventListener("click", () => {
+      closeFileStorageChoice("move");
+    });
+
+    cancelFileStorageChoiceButton.addEventListener("click", () => {
+      closeFileStorageChoice(null);
     });
 
     importBatchName.addEventListener("keydown", (event) => {
@@ -17331,6 +17816,11 @@
 
     document.addEventListener("keydown", (event) => {
       if (event.key !== "Escape") {
+        return;
+      }
+
+      if (fileStorageChoiceOverlay.classList.contains("open")) {
+        closeFileStorageChoice(null);
         return;
       }
 

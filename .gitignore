@@ -1,6 +1,7 @@
 Main/node_modules/
 Main/dist/
 Main/runtime/python/
+Main/runtime/python-*/
 
 codec-test-output/
 inference-direct-test-output/
